@@ -4,7 +4,7 @@
 
 ### Structure (not final):
 
--   `ui` - JavaFX project
+-   `application` - JavaFX project
 
 ### Pre-requisites:
 
@@ -27,15 +27,48 @@
 
 ### Steps
 
-1. Clone the repo in terminal (If using GitHub Desktop, just copy url provided below)
+1.  Clone the repo in terminal (If using GitHub Desktop, just copy url provided below)
 
     ```bash
     git clone https://github.com/CS4485-SentenceBuilder-Team35/sentence-builder.git
     ```
 
-2. To run:  
-   Gradle automatically has Build and Run tasks defined
-    - Click on the Gradle icon (Elephant)
-    - Under `Tasks`
-    - In `application`
-    - Click play on `run`
+2.  To build:  
+    Gradle automatically has Build tasks defined
+
+    -   Method 1:
+
+        -   Click on the Gradle icon (Elephant)
+        -   Under `Tasks`
+        -   In `application`
+        -   Click play on `run`
+
+    -   Method 2:
+        -   In terminal (UNIX)
+        ```bash
+        ./gradlew
+        ```
+        -   In terminal (Windows)
+        ```powershell
+        .\gradlew.bat
+        ```
+
+3.  To run:
+    Gradle automatically has Build tasks defined
+
+    -   Method 1:
+
+        -   Click on the Gradle icon (Elephant)
+        -   Under `Tasks`
+        -   In `application`
+        -   Click play on `run`
+
+    -   Method 2:
+        -   In terminal (UNIX)
+        ```bash
+        ./gradlew run
+        ```
+        -   In terminal (Windows)
+        ```powershell
+        .\gradlew.bat run
+        ```

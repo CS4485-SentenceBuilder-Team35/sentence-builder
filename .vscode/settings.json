@@ -4,5 +4,6 @@
     "[java]": {
         "editor.tabSize": 4
     },
-    "java.configuration.updateBuildConfiguration": "automatic"
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "editor.formatOnSave": true
 }

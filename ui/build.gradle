@@ -29,7 +29,7 @@ tasks.withType(JavaCompile) {
 
 application {
   mainModule = 'org.utdteamthreefive.ui'
-  mainClass = 'org.utdteamthreefive.ui.HelloApplication'
+  mainClass = 'org.utdteamthreefive.ui.Main'
 }
 
 javafx {

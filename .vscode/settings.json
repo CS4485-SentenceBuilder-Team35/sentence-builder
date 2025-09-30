@@ -1,0 +1,7 @@
+{
+    "gradle.nestedProjects": true,
+    "java.format.settings.url": ".vscode/java-formatter.xml",
+    "[java]": {
+        "editor.tabSize": 4
+    }
+}

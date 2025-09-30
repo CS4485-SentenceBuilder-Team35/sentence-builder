@@ -1,8 +1,8 @@
-module com.utd.team35.ui {
+module org.utdteamthreefive.ui {
     requires javafx.controls;
     requires javafx.fxml;
 
 
-    opens com.utd.team35.ui to javafx.fxml;
-    exports com.utd.team35.ui;
+    opens org.utdteamthreefive.ui to javafx.fxml;
+    exports org.utdteamthreefive.ui;
 }

@@ -1,4 +1,4 @@
-package com.utd.team35.ui;
+package org.utdteamthreefive.ui;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;

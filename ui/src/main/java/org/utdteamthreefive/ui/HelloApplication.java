@@ -1,4 +1,4 @@
-package com.utd.team35.ui;
+package org.utdteamthreefive.ui;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;

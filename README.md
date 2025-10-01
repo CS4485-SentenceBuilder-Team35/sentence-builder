@@ -4,7 +4,11 @@
 
 ### Structure (not final):
 
--   `application` - JavaFX project
+-   `application/` - JavaFX project
+    -   `src/main/java` - Where Java classes are located
+        -   `org.utdteamthreefive.backend` - Package for backend stuff
+        -   `org.utdteamthreefive.ui` - Package for UI stuff
+    -   `src/main/resources` - Where FXML files are located for JavaFX
 
 ### Pre-requisites:
 

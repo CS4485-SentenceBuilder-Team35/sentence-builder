@@ -1,17 +1,28 @@
-# Compiled class file
-*.class
+# OS junk
+.DS_Store
+Thumbs.db
 
-# Log file
+# IDEs
+.idea/
+*.iml
+.vscode/
+
+# Gradle
+.gradle/
+**/build/
+
+# Keep the Gradle wrapper JAR (needed for reproducible builds)
+!gradle/wrapper/gradle-wrapper.jar
+
+# Java
+*.class
+hs_err_pid*
+replay_pid*
+
+# Logs
 *.log
 
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
-*.jar
+# Archives (don’t commit build artifacts)
 *.war
 *.nar
 *.ear
@@ -19,6 +30,12 @@
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-replay_pid*
+# Env & secrets
+.env
+.env.*
+*.env
+# Track all example envs anywhere (root or modules)
+!**/.env.example
+
+# If you only want to ignore a module env too, this still works:
+# application/.env

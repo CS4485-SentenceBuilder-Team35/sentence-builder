@@ -1,7 +1,7 @@
 plugins {
   id 'java'
   id 'application'
-  id 'org.javamodularity.moduleplugin' version '1.8.12'
+  //id 'org.javamodularity.moduleplugin' version '1.8.12'
   id 'org.openjfx.javafxplugin' version '0.1.0'
   id 'org.beryx.jlink' version '3.1.1'
 }
@@ -38,8 +38,9 @@ javafx {
 }
 
 dependencies {
-  testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
-  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
+    testImplementation("org.junit.jupiter:junit-jupiter-api:${junitVersion}")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${junitVersion}")
+    implementation("io.github.cdimascio:dotenv-java:3.0.0")
 }
 
 test {

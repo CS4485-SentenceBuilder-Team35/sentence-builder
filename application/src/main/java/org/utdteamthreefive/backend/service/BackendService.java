@@ -27,7 +27,7 @@ public class BackendService {
     // call this from JavaFX controller (no progress bar)
     public static void processFile(String filePath) {
 
-        logger.info("Starting processing for file: " + filePath);
+        logger.info("✅ Starting processing for file: " + filePath);
 
         try {
             Path path = Paths.get(filePath);

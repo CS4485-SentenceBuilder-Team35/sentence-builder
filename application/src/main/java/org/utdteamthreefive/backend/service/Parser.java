@@ -72,7 +72,7 @@ public class Parser implements Runnable {
      */
     @Override
     public void run() {
-        logger.info("Parsing Text File: " + path);
+        logger.info("📝 Parsing Text File: " + path);
 
         long processed = 0L, seenTokens = 0L;
         String prevWord = null, lastWord = null;
@@ -90,7 +90,7 @@ public class Parser implements Runnable {
                     token = token.toLowerCase(Locale.ROOT);
 
                     String type = classifyType(token);
-                    if ("word".equals(type)) {
+                    if ("alpha".equals(type)) {
                         seenTokens++;
                         recordToken(token, type, 1, atSentenceStart ? 1 : 0, 0);
                         if (prevWord != null)
@@ -130,14 +130,14 @@ public class Parser implements Runnable {
     }
 
     /**
-     * Determines the classification type of a token word or misc.
+     * Determines the classification type of a token alpha or misc.
      *
      * @param token the token to classify
      * @return a string label representing the token type
      */
     private static String classifyType(String token) {
         if (WORD_WITH_OPTIONAL_COMMA.matcher(token).matches())
-            return "word";
+            return "alpha";
         return "misc";
     }
 
@@ -172,6 +172,8 @@ public class Parser implements Runnable {
      * @throws InterruptedException if the queue operation is interrupted
      */
     private void flush(long processed, boolean end) throws InterruptedException {
+
+        logger.info("🚚 Sending batch with " + wordCounts.size() + " words and " + bigramCounts.size() + " bigrams");
         if (wordCounts.isEmpty() && bigramCounts.isEmpty() && !end)
             return;
 

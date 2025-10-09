@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS FILE_TOKEN(
     word_count INT,
     start_count INT,
     end_count INT,
-    type_ ENUM('alpha', 'numeric', 'punct', 'misc'),
+    type_ ENUM('alpha', 'numeric', 'punc', 'misc'),
     
     PRIMARY KEY(file_id, word_id),
     FOREIGN KEY (file_id) REFERENCES FILES(file_id) ON DELETE CASCADE

@@ -12,6 +12,7 @@ import org.utdteamthreefive.backend.models.Batch;
  * Minimal integration test to verify Parser ↔ DBInserter workflow.
  * Creates a temporary text file, runs both threads, then confirms
  * the process completes and inserts into the database.
+ *  @Author Aisha Qureshi
  */
 public class TestParser {
 

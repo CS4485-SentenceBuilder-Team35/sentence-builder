@@ -17,6 +17,7 @@ import org.utdteamthreefive.backend.util.DatabaseManager;
  * Updated for the new global SentenceBuilder schema:
  * - WORD and WORD_FOLLOW are global (no per-file tables)
  * - FILES still logs file metadata (path, word count, date)
+ * @Author Aisha Qureshi
  */
 public class DBInserter implements Runnable {
     private static final Logger logger = Logger.getLogger(DBInserter.class.getName());

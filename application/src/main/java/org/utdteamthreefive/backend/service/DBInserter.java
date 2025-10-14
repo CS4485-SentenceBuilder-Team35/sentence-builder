@@ -27,6 +27,8 @@ public class DBInserter implements Runnable {
     private Connection conn;
     private Long fileId;
 
+    private long wordsThisFile = 0L;
+
     public DBInserter(Path path, BlockingQueue<Batch> queue) {
         this.path = path;
         this.batchQueue = queue;
@@ -109,13 +111,16 @@ public class DBInserter implements Runnable {
         if (batch.wordDeltas.isEmpty()) return;
 
         String upsertSql = """
-            INSERT INTO word (word_token, total_count, start_count, endcount, type)
+            INSERT INTO word (word_token, total_count, start_count, end_count, type_)
             VALUES (?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
                 total_count = total_count + VALUES(total_count),
                 start_count = start_count + VALUES(start_count),
-                endcount = endcount + VALUES(endcount)
+                end_count = end_count + VALUES(end_count),
+                type_ = VALUES(type_)
             """;
+        
+        long batchTotal = 0L;
 
         try (PreparedStatement stmt = conn.prepareStatement(upsertSql)) {
             for (WordDelta wd : batch.wordDeltas) {
@@ -131,10 +136,13 @@ public class DBInserter implements Runnable {
                 }
                 stmt.setString(5, type);
 
+                batchTotal += wd.total();
+
                 stmt.addBatch();
             }
             stmt.executeBatch();
         }
+        wordsThisFile += batchTotal;
     }
 
     /**
@@ -183,21 +191,13 @@ public class DBInserter implements Runnable {
      * After all batches are processed, compute total words for the file.
      */
     private void updateFileTotals() throws SQLException {
-        String countSql = "SELECT SUM(total_count) AS total_words FROM word";
-        int totalWords = 0;
-
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(countSql)) {
-            if (rs.next()) totalWords = rs.getInt("total_words");
-        }
-
         String updateSql = "UPDATE files SET word_count = ? WHERE file_id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
-            stmt.setInt(1, totalWords);
+            stmt.setLong(1, wordsThisFile);
             stmt.setLong(2, fileId);
             stmt.executeUpdate();
         }
 
-        logger.info("📊 Updated totals → Words: " + totalWords);
+        logger.info("📊 Updated totals → Words (this file): " + wordsThisFile);
     }
 }

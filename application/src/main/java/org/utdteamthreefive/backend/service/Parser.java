@@ -112,8 +112,9 @@ public class Parser implements Runnable {
                     // - processed tokens reach the flush interval
                     // - OR unique word count exceeds threshold
                     // - OR unique bigram count exceeds threshold
-                    if (seenTokens % flushEveryTokens == 0 || wordCounts.size() > flushUniqueThreshold
-                            || bigramCounts.size() > flushUniqueThreshold) {
+                    if ((seenTokens > 0 && seenTokens % flushEveryTokens == 0)
+                            || wordCounts.size() >= flushUniqueThreshold
+                            || bigramCounts.size() >= flushUniqueThreshold) {
                         flush(processed, false);
                     }
                 }
@@ -172,10 +173,10 @@ public class Parser implements Runnable {
      * @throws InterruptedException if the queue operation is interrupted
      */
     private void flush(long processed, boolean end) throws InterruptedException {
-
-        logger.info("🚚 Sending batch with " + wordCounts.size() + " words and " + bigramCounts.size() + " bigrams");
         if (wordCounts.isEmpty() && bigramCounts.isEmpty() && !end)
             return;
+        
+        logger.info("🚚 Sending batch with " + wordCounts.size() + " words and " + bigramCounts.size() + " bigrams");
 
         var words = new ArrayList<Batch.WordDelta>(wordCounts.size());
         for (var entry : wordCounts.entrySet()) {

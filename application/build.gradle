@@ -6,6 +6,12 @@ plugins {
   id 'org.beryx.jlink' version '3.1.1'
 }
 
+javafx {
+    version = "25-ea+2"   // JavaFX early-access build for Java 25
+    modules = [ 'javafx.controls', 'javafx.fxml' ]
+}
+
+
 group 'org.utdteamthreefive'
 version '1.0-SNAPSHOT'
 

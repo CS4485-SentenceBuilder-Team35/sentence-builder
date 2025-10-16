@@ -4,6 +4,7 @@ import javafx.event.ActionEvent;
 import javafx.scene.Node;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.FlowPane;
@@ -31,8 +32,8 @@ public class MainController {
 
             // Query the FlowPane Node so that the Table can be added to it
             FlowPane flowPane = (FlowPane) scene.lookup(".main-flow-pane");
-            // flowPane.getChildren().add(table.getTableView());
-            // FlowPane.setMargin(table.getTableView(), new Insets(16.0, 0, 16.0, 0));
+            flowPane.getChildren().add(table.getTableView());
+            FlowPane.setMargin(table.getTableView(), new Insets(16.0, 0, 16.0, 0));
 
             stage.show();
 

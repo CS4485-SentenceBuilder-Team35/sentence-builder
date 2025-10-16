@@ -1,0 +1,32 @@
+/* Author: Rommel Isaac Baldivas */
+
+/* Main container styles */
+.main-vbox {
+    -fx-background-color: #fff;
+}
+
+.main-flow-pane {
+    -fx-background-color: #fff;
+}
+
+/* Header label styles */
+.header-label {
+    -fx-background-radius: 32px 32px 0px 0px;
+    -fx-background-color: #007aff;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 4, 0, -2, -5);
+}
+
+/* Table styles */
+.main-table {
+    -fx-border-color: #fff;
+    -fx-background-color: #fff;
+}
+
+/* Table column styles - alternating colors */
+.column-primary {
+    -fx-background-color: #95c8ff;
+}
+
+.column-secondary {
+    -fx-background-color: #ecf5ff;
+}

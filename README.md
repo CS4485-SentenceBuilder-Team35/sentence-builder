@@ -37,7 +37,45 @@
     git clone https://github.com/CS4485-SentenceBuilder-Team35/sentence-builder.git
     ```
 
-2.  To build:  
+2. Create Environment File
+
+
+Move into the **application directory**:
+
+
+```bash
+cd application
+```
+
+
+Copy the example environment file:
+
+
+```bash
+cp .env.example .env
+```
+
+
+Open `.env` in your code editor and add your own environment variables:
+
+
+```bash
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=SentenceBuilder
+DB_USER=root
+DB_PASSWORD=yourpassword
+```
+
+
+✅ **Note:**
+
+
+* Do **not** commit your `.env` file to GitHub — it’s private.
+* Only `.env.example` should be tracked in Git for teammates to copy.
+
+
+3.  To build:  
     Gradle automatically has Build tasks defined
 
     -   Method 1:
@@ -57,7 +95,7 @@
         .\gradlew.bat
         ```
 
-3.  To run:
+4.  To run:
     Gradle automatically has Build tasks defined
 
     -   Method 1:
@@ -76,3 +114,5 @@
         ```powershell
         .\gradlew.bat run
         ```
+
+        

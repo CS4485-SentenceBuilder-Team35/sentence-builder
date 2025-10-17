@@ -1,78 +1,159 @@
-# Sentence Builder
+# 🧠 Sentence Builder
 
-## Repo Setup
+Sentence Builder is a JavaFX application that implements a simplified language model for sentence generation and auto-completion using statistical analysis of text files.
+---
 
-### Structure (not final):
+## 🚀 Features
+- Parses text files and tokenizes words  
+- Tracks word frequencies and sentence boundaries  
+- Builds word-follow (bigram) relationships  
+- Stores processed data in MySQL for analysis and visualization  
+- Prepares foundation for a JavaFX-based user interface  
 
--   `application/` - JavaFX project
-    -   `src/main/java` - Where Java classes are located
-        -   `org.utdteamthreefive.backend` - Package for backend stuff
-        -   `org.utdteamthreefive.ui` - Package for UI stuff
-    -   `src/main/resources` - Where FXML files are located for JavaFX
+---
 
-### Pre-requisites:
+## 🧩 Tech Stack
+- **Java 17**
+- **JavaFX**
+- **Gradle**
+- **MySQL**
 
--   Git
--   VS Code / IntelliJ
--   [OpenJDK 25](https://www.oracle.com/java/technologies/downloads/#java25)  
-    **Do these steps after cloning repo if you have multiple JDKs already:**
-    -   IntelliJ:
-        -   Go to `Settings`
-        -   Under `Build, Execution, Deployment`
-        -   Under `Build Tools`, click on `Gradle`
-        -   Next to `Gradle JVM`, either `Download JDK` directly here or `Add JDK` if you downloaded from link above
-    -   VS Code:
-        -   Download installer from above and install in a path
-        -   Go to Command Palette (**Windows**: `Ctrl + Shift + P` or **Mac**: `Shift + Command + P`)
-        -   Search up for `Java: Open Project Settings`
-        -   There should be a `JDK Runtime` tab
-        -   Click on `Find a local JDK` and select the folder of where you installed openjdk-25
--   Java Extension Pack (if using VS Code)
+---
 
-### Steps
+## ⚙️ Step-by-Step Setup Instructions
 
-1.  Clone the repo in terminal (If using GitHub Desktop, just copy url provided below)
+### 🧭 Step 1 — Clone the Repository
+First, clone the project from GitHub and navigate into the directory:
+```bash
+git clone https://github.com/CS4485-SentenceBuilder-Team35/sentence-builder.git
+cd sentence-builder
 
-    ```bash
-    git clone https://github.com/CS4485-SentenceBuilder-Team35/sentence-builder.git
-    ```
+---
 
-2.  To build:  
-    Gradle automatically has Build tasks defined
+### ⚙️ Step 2 — Create Environment File
 
-    -   Method 1:
+Move into the **application directory**:
 
-        -   Click on the Gradle icon (Elephant)
-        -   Under `Tasks`
-        -   In `application`
-        -   Click play on `run`
+```bash
+cd application
+```
 
-    -   Method 2:
-        -   In terminal (UNIX)
-        ```bash
-        ./gradlew
-        ```
-        -   In terminal (Windows)
-        ```powershell
-        .\gradlew.bat
-        ```
+Copy the example environment file:
 
-3.  To run:
-    Gradle automatically has Build tasks defined
+```bash
+cp .env.example .env
+```
 
-    -   Method 1:
+Open `.env` in your code editor and add your own environment variables:
 
-        -   Click on the Gradle icon (Elephant)
-        -   Under `Tasks`
-        -   In `application`
-        -   Click play on `run`
+```bash
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=SentenceBuilder
+DB_USER=root
+DB_PASSWORD=yourpassword
+```
 
-    -   Method 2:
-        -   In terminal (UNIX)
-        ```bash
-        ./gradlew run
-        ```
-        -   In terminal (Windows)
-        ```powershell
-        .\gradlew.bat run
-        ```
+✅ **Note:**
+
+* Do **not** commit your `.env` file to GitHub — it’s private.
+* Only `.env.example` should be tracked in Git for teammates to copy.
+
+---
+
+### 🧩 Step 3 — Run the Application
+
+To build and run the application:
+
+```bash
+./gradlew run
+```
+---
+
+### 🧪 Step 4 — Run Tests
+
+To verify that everything is working correctly:
+
+```bash
+./gradlew clean test
+```
+
+✅ If tests pass, your parser, inserter, and database configuration are all connected properly.
+
+---
+
+## 🗂 Project Structure
+
+```
+sentence-builder/
+│
+├── application/
+│   ├── src/
+│   │   ├── main/java/org/utdteamthreefive/backend/
+│   │   │   ├── models/        → contains Batch, WordDelta, BigramDelta
+│   │   │   ├── service/       → contains Parser.java, DBInserter.java, BackendService.java
+│   │   │   └── util/          → contains DatabaseManager.java and helper utilities
+│   │   ├── resources/         → input files, env configs, etc.
+│   │   └── test/              → unit tests for parser and database
+│   ├── .env.example           → sample environment variables
+│   └── .env                   → your private environment variables (not committed)
+│
+├── README.md                  → project documentation
+├── build.gradle               → Gradle build configuration
+└── settings.gradle            → Gradle settings
+```
+
+---
+
+## 💻 How the System Works
+
+* **Parser.java** → Reads and tokenizes text into words and bigrams.
+* **DBInserter.java** → Consumes parsed batches and writes them into the database.
+* **BackendService.java** → Coordinates Parser and DBInserter threads.
+* **DatabaseManager.java** → Handles connection to MySQL using environment variables.
+* **TestRun.java** → Allows quick local testing of parser + inserter without UI.
+
+---
+
+## 🧠 Database Schema Overview
+
+* **FILES** → Tracks imported text files (file name, word count, date imported).
+* **WORD** → Stores each unique word with frequency, start/end counts, and type.
+* **WORD_FOLLOW** → Stores relationships between consecutive words (bigrams).
+
+---
+
+## 🤝 Contributing Guidelines
+
+* Always create a new branch before making changes:
+
+  ```bash
+  git checkout -b <branch-name>
+  ```
+
+* After editing files, stage and commit:
+
+  ```bash
+  git add .
+  git commit -m "Added README and environment setup documentation"
+  ```
+
+* Push your branch:
+
+  ```bash
+  git push origin <branch-name>
+  ```
+
+* Open a Pull Request on GitHub → “Compare & Pull Request” → Add a clear title and description.
+
+---
+
+## 👥 Team 35 — Authors
+
+* **Aisha Qureshi**
+* **Zaeem Rashid**
+* **Aiden Martinez**
+* **Rommel Baldivas**
+* **Justin Yao**
+
+---

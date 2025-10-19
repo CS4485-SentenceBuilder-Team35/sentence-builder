@@ -11,9 +11,8 @@ import java.io.IOException;
 public class Main extends Application {
     @Override
     public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("main-view.fxml"));
-        Parent root = fxmlLoader.load();
-        Scene scene = new Scene(root, 320, 240);
+        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("file-tab.fxml"));
+        Scene scene = new Scene(fxmlLoader.load(), 320, 240);
         stage.setTitle("Sentence Builder");
         stage.setScene(scene);
         stage.show();

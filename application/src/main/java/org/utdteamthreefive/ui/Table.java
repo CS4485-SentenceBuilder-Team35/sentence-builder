@@ -54,7 +54,18 @@ public class Table {
             var rs = selectStatement.executeQuery();
             data.clear();
             while (rs.next()) {
-                WordType type = WordType.valueOf(rs.getString("type_").toLowerCase());
+                // Make sure that type maps to WordType enum
+                WordType type = null;
+                String typeStr = rs.getString("type_");
+                if (typeStr != null && typeStr.equalsIgnoreCase("alpha")) {
+                    type = WordType.alpha;
+                } else if (typeStr != null && typeStr.equalsIgnoreCase("misc")) {
+                    type = WordType.misc;
+                } else {
+                    throw new IllegalArgumentException("Unknown word type: " + typeStr);
+                }
+
+                // Create Word object and add to data
                 Word word = new Word(rs.getInt("word_id"), rs.getString("word_token"), rs.getInt("total_count"),
                         rs.getInt("start_count"), rs.getInt("end_count"), type);
                 data.add(word);

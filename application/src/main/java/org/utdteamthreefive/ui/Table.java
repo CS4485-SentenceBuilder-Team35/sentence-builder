@@ -14,10 +14,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.TableView.TableViewSelectionModel;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.util.converter.IntegerStringConverter;
 
 public class Table {
     TableView<Word> table;
@@ -31,54 +28,41 @@ public class Table {
             new Word(10, "dog", 18, 3, 2, WordType.alpha), new Word(11, "!", 75, 0, 25, WordType.misc),
             new Word(12, ".", 200, 0, 80, WordType.misc), new Word(13, "?", 35, 0, 15, WordType.misc));
 
-    ObservableList<Word> selectedItems;
-
     public Table() {
         table = new TableView<Word>();
         table.setItems(data);
         table.getStyleClass().add("main-table");
         table.getColumns().setAll(setupColumns());
-        table.setEditable(true);
-        table.setMinWidth(TableView.USE_COMPUTED_SIZE);
-
-        // Allow table to expand when columns are resized
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        // Prevent the table from being editable
+        table.setEditable(false);
     }
 
     public ArrayList<TableColumn<Word, ?>> setupColumns() {
         // Setup the columns
         TableColumn<Word, String> wordTokenCol = new TableColumn<Word, String>("Text");
         wordTokenCol.setPrefWidth(400);
-        wordTokenCol.setMinWidth(200);
         wordTokenCol.setCellValueFactory(new PropertyValueFactory<>("wordToken"));
-        wordTokenCol.setEditable(false);
+        wordTokenCol.getStyleClass().add("column-primary");
 
         TableColumn<Word, Integer> totalCountCol = new TableColumn<Word, Integer>("Total Count");
         totalCountCol.setPrefWidth(90);
-        totalCountCol.setMinWidth(70);
         totalCountCol.setCellValueFactory(new PropertyValueFactory<>("totalCount"));
-        totalCountCol.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-        totalCountCol.setEditable(true);
+        totalCountCol.getStyleClass().add("column-secondary");
 
         TableColumn<Word, Integer> startCountCol = new TableColumn<Word, Integer>("Start Count");
         startCountCol.setPrefWidth(90);
-        startCountCol.setMinWidth(70);
         startCountCol.setCellValueFactory(new PropertyValueFactory<>("startCount"));
-        startCountCol.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-        startCountCol.setEditable(true);
+        startCountCol.getStyleClass().add("column-primary");
 
         TableColumn<Word, Integer> endCountCol = new TableColumn<Word, Integer>("End Count");
         endCountCol.setPrefWidth(90);
-        endCountCol.setMinWidth(70);
         endCountCol.setCellValueFactory(new PropertyValueFactory<>("endCount"));
-        endCountCol.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter()));
-        endCountCol.setEditable(true);
+        endCountCol.getStyleClass().add("column-secondary");
 
         TableColumn<Word, String> typeCol = new TableColumn<Word, String>("Type");
         typeCol.setPrefWidth(200);
-        typeCol.setMinWidth(100);
         typeCol.setCellValueFactory(new PropertyValueFactory<>("type"));
-        typeCol.setEditable(false);
+        typeCol.getStyleClass().add("column-primary");
 
         return new ArrayList<TableColumn<Word, ?>>(
                 Arrays.asList(wordTokenCol, totalCountCol, startCountCol, endCountCol, typeCol));

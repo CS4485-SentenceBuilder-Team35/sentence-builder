@@ -22,57 +22,11 @@
     -fx-background-color: #fff;
 }
 
-/* Table column header styles */
-.column-header .label {
-    -fx-alignment: CENTER;
-    -fx-background-color: #007aff;
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
+/* Table column styles - alternating colors */
+.column-primary {
+    -fx-background-color: #95c8ff;
 }
 
-/* Table row alternating colors */
-.table-row-cell {
-    -fx-background-color: #fff;
-    -fx-text-fill: #000;
-}
-
-.table-row-cell:odd {
-    -fx-background-color: #f8f9fa;
-}
-
-.table-row-cell:even {
-    -fx-background-color: #fff;
-}
-
-.table-row-cell:selected {
-    -fx-background-color: #dfe9ff;
-    -fx-text-fill: #000;
-}
-
-/* Optional: Hover effect for rows */
-.table-row-cell:hover {
-    -fx-background-color: #e3f2fd;
-}
-
-/* Table cell alignment */
-.table-cell {
-    -fx-alignment: CENTER;
-    -fx-text-fill: #000;
-}
-
-/* Selected cell styles - ensures text stays black when selected */
-.table-cell:selected {
-    -fx-background-color: #b3d9ff;
-    -fx-text-fill: #000;
-}
-
-/* Focused selected cell styles */
-.table-cell:selected:focused {
-    -fx-background-color: #99ccff;
-    -fx-text-fill: #000;
-}
-
-/* Table row selection styles - keep text black */
-.table-row-cell:selected .table-cell {
-    -fx-text-fill: #000;
+.column-secondary {
+    -fx-background-color: #ecf5ff;
 }

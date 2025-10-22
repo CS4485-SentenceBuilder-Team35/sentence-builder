@@ -38,12 +38,15 @@ public class DatabaseManager {
         logger.fine("Opening database connection.");
         try {
             Connection conn = DriverManager.getConnection(URL, DB_USER, DB_PASS);
+            if (conn == null) {
+            logger.severe("DriverManager returned null connection!");
+            }
             logger.fine("Database connection established.");
             return conn;
         } catch (SQLException e) {
             logger.severe("Failed to establish database connection: " + e.getMessage());
+            throw new RuntimeException("Database connection failed", e);
         }
-        return null;
     }
 
     /**

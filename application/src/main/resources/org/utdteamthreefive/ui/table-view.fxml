@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox alignment="CENTER" prefHeight="1024.0" prefWidth="1440.0" spacing="20.0"
+   styleClass="main-vbox" stylesheets="@table.css" xmlns="http://javafx.com/javafx/25"
+   xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.utdteamthreefive.ui.MainController">
+   <padding>
+      <Insets bottom="20.0" left="20.0" right="20.0" top="5.0" />
+   </padding>
+   <children>
+      <FlowPane alignment="TOP_CENTER" prefHeight="1000.0" prefWidth="1400.0"
+         styleClass="main-flow-pane">
+         <children>
+            <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="60.0" prefWidth="1400.0"
+               styleClass="header-label" text="Words" textAlignment="CENTER" textFill="WHITE">
+               <font>
+                  <Font size="16.0" />
+               </font>
+            </Label>
+         </children>
+      </FlowPane>
+   </children>
+</VBox>

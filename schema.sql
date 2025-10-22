@@ -1,5 +1,5 @@
 -- AIDEN MARTINEZ
-drop database IF EXISTS SentenceBuilder;
+drop database SentenceBuilder;
 create database IF NOT EXISTS SentenceBuilder;
 use SentenceBuilder;
 CREATE TABLE IF NOT EXISTS FILES(

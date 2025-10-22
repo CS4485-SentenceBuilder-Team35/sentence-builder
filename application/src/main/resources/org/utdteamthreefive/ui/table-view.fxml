@@ -1,31 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Tab?>
-<?import javafx.scene.control.TabPane?>
-<?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.layout.FlowPane?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 
-<VBox alignment="CENTER" prefHeight="1024.0" prefWidth="1440.0" spacing="20.0"
-   styleClass="main-vbox" stylesheets="@table.css" xmlns="http://javafx.com/javafx/25"
-   xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.utdteamthreefive.ui.MainController">
-   <padding>
-      <Insets bottom="20.0" left="20.0" right="20.0" top="5.0" />
-   </padding>
+<VBox alignment="CENTER" prefHeight="1024.0" prefWidth="1440.0" spacing="20.0" style="-fx-background-color: #fff;" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.utdteamthreefive.ui.MainController">
+  <padding>
+    <Insets bottom="20.0" left="20.0" right="20.0" top="5.0" />
+  </padding>
    <children>
-      <FlowPane alignment="TOP_CENTER" prefHeight="1000.0" prefWidth="1400.0"
-         styleClass="main-flow-pane">
+      <FlowPane alignment="TOP_CENTER" prefHeight="1000.0" prefWidth="1400.0" style="-fx-background-color: #fff;">
          <children>
-            <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="60.0" prefWidth="1400.0"
-               styleClass="header-label" text="Words" textAlignment="CENTER" textFill="WHITE">
+            <Label alignment="CENTER" contentDisplay="CENTER" prefHeight="60.0" prefWidth="1400.0" style="-fx-background-radius: 32px 32px 0px 0px; -fx-background-color: #007AFF; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 4, 0, -2, -5);" text="Words" textAlignment="CENTER" textFill="WHITE">
                <font>
                   <Font size="16.0" />
                </font>
             </Label>
+            <TableView style="-fx-border-color: #fff; -fx-background-color: #fff;">
+              <columns>
+                <TableColumn prefWidth="50.0" style="-fx-background-color: #95C8FF;" text="ID" />
+                <TableColumn minWidth="-Infinity" prefWidth="400.0" style="-fx-background-color: ECF5FF;" text="Text" />
+                  <TableColumn minWidth="-1.0" prefWidth="90.0" style="-fx-background-color: #95C8FF;" text="Total Count" />
+                  <TableColumn minWidth="-1.0" prefWidth="90.0" style="-fx-background-color: #ECF5FF;" text="Start Count" />
+                  <TableColumn maxWidth="-1.0" minWidth="90.0" prefWidth="90.0" style="-fx-background-color: #95C8FF;" text="End Count" />
+                  <TableColumn minWidth="-1.0" prefWidth="200.0" style="-fx-background-color: #ECF5FF;" text="Type" />
+              </columns>
+               <FlowPane.margin>
+                  <Insets bottom="16.0" top="16.0" />
+               </FlowPane.margin>
+            </TableView>
          </children>
       </FlowPane>
    </children>

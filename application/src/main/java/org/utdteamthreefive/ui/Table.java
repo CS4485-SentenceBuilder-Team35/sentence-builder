@@ -21,6 +21,10 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.util.converter.IntegerStringConverter;
 
+/**
+ * This is a class that will initialize a TableView and
+ * populate it with the WORD table from the database
+ */
 public class Table {
     TableView<Word> table;
 
@@ -32,6 +36,7 @@ public class Table {
     private Connection conn;
 
     public Table() {
+        // Establish the TableView
         table = new TableView<Word>();
         table.setItems(data);
         table.getStyleClass().add("main-table");
@@ -44,10 +49,7 @@ public class Table {
 
         // Open DB connection and query for words
         conn = DatabaseManager.open();
-        if (conn == null) {
-            System.err.println("❌ Failed to open database connection");
-            return;
-        }
+
         String wordQuery = "SELECT word_id, word_token, total_count, start_count, end_count, type_ FROM WORD";
         try {
             PreparedStatement selectStatement = conn.prepareStatement(wordQuery);

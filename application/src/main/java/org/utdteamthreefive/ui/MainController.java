@@ -92,8 +92,9 @@ public class MainController {
         addFileTab("report.pdf");
     }
 
-    public void addFileTab(String fileName) {
+    public FileTab addFileTab(String fileName) {
         FileTab fileTab = new FileTab(fileName);
         uploadContainer.getChildren().add(fileTab);
+        return fileTab;
     }
 }

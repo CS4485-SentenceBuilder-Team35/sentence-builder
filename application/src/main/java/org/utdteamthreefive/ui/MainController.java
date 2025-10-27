@@ -1,34 +1,43 @@
 package org.utdteamthreefive.ui;
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.scene.Node;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.HBox;
+import javafx.scene.control.TabPane;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import org.utdteamthreefive.backend.FileParseHandle;
+import org.utdteamthreefive.backend.util.FileParseHandle;
 import org.utdteamthreefive.backend.SampleClass;
 
-import javax.swing.*;
 import java.io.File;
 import java.util.List;
 import javafx.scene.layout.VBox;
+import java.net.URL;
+import java.util.ResourceBundle;
 
-public class MainController {
+public class MainController implements Initializable {
     private Stage stage;
     private Scene scene;
     private Parent root;
+    private Table table;
 
     @FXML
     private HBox fileRow; // fx:id="fileRow" in FXML
+    @FXML
     private ProgressBar progressBar; // fx:id="progressBar" in FXML
-    private VBox uploadContainer;
+    @FXML
+    private VBox uploadFileListContainer; // fx:id="uploadFileListContainer" in FXML
+    @FXML
+    private TabPane tabPane; // fx:id="tabPane" in FXML
 
     /**
      * @author Rommel Isaac Baldivas
@@ -78,7 +87,8 @@ public class MainController {
                 .showOpenMultipleDialog((Stage) ((Node) event.getSource()).getScene().getWindow());
 
         for (int i = 0; i < files.size(); i++) {
-            FileParseHandle.ParseFile(files.get(i).getAbsolutePath());
+            FileTab fileTab = addFileTab(files.get(i).getName());
+            FileParseHandle.ParseFile(files.get(i).getAbsolutePath(), table);
         }
     }
 
@@ -86,15 +96,67 @@ public class MainController {
     protected void onGenerateSentenceButtonClick(ActionEvent event) {
     }
 
-    public void initialize() {
-        // Add sample file tabs for testing
-        addFileTab("example.txt");
-        addFileTab("report.pdf");
-    }
-
     public FileTab addFileTab(String fileName) {
         FileTab fileTab = new FileTab(fileName);
-        uploadContainer.getChildren().add(fileTab);
+        uploadFileListContainer.getChildren().add(fileTab);
         return fileTab;
+    }
+
+    /**
+     * The initialize method is called automatically after all FXML
+     * members have been injected. It is used to perform any necessary setup for the
+     * controller such as responsive widths, initializing UI components, and adding
+     * the Table to the FlowPane.
+     *
+     * @author Rommel Isaac Baldivas
+     */
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        if (tabPane == null) {
+            System.err.println("Cannot find TabPane with fx:id 'tabPane'");
+            return;
+        }
+
+        // Set up responsive tab widths if TabPane exists
+        setupResponsiveTabWidths();
+
+        // Use Platform.runLater to ensure the TabPane is in the scene graph
+        Platform.runLater(() -> {
+            scene = tabPane.getScene();
+            if (scene == null) {
+                System.err.println("TabPane is not yet part of a Scene.");
+                return;
+            }
+            // Query the FlowPane Node so that the Table can be added to it
+            table = new Table();
+            FlowPane flowPane = (FlowPane) scene.lookup(".table-flow-pane");
+            if (flowPane == null) {
+                System.err.println("FlowPane is not found.");
+                return;
+            }
+            flowPane.getChildren().add(table.getTableView());
+            FlowPane.setMargin(table.getTableView(), new Insets(16.0, 0, 16.0, 0));
+        });
+
+    }
+
+    /**
+     * The event listener will listen for width changes and update tab
+     * widths accordingly
+     * 
+     * @author Rommel Isaac Baldivas
+     */
+    private void setupResponsiveTabWidths() {
+        tabPane.widthProperty().addListener((observable, oldValue, newValue) -> {
+            double availableWidth = newValue.doubleValue() - tabPane.getInsets().getLeft()
+                    - tabPane.getInsets().getRight();
+            int tabCount = tabPane.getTabs().size();
+
+            if (tabCount > 0 && availableWidth > 0) {
+                double tabWidth = availableWidth / tabCount;
+                tabPane.setTabMinWidth(tabWidth);
+                tabPane.setTabMaxWidth(Double.MAX_VALUE); // No max width limit
+            }
+        });
     }
 }

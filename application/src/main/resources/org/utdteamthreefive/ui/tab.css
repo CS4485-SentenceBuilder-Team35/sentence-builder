@@ -1,0 +1,27 @@
+.tab-pane {
+    -fx-tab-min-height: 60px;
+}
+
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-background-color: transparent;
+}
+
+/* Tab styles - matching header-label appearance */
+.tab {
+    -fx-background-color: #94bfff;
+    -fx-background-radius: 32px 32px 0px 0px;
+    /*-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.25), 4, 0, -2, -5);*/
+}
+
+.tab-label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.tab:selected {
+    -fx-background-color: #007aff;
+}
+
+.tab:focused {
+    -fx-border-width: 0;
+}

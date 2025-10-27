@@ -7,10 +7,11 @@ import java.util.logging.Logger;
 import org.utdteamthreefive.backend.models.Batch;
 
 /**
- * PRODUCER - CONSUMER pattern with a BlockingQueue between Parser and DBInserter.
+ * PRODUCER - CONSUMER pattern with a BlockingQueue between Parser and
+ * DBInserter.
  * Provides backend processing functionality for handling text files.
  * This service coordinates the parsing of large text files and the writing of
- * processed data to a Database. It initializes worker threads for both parsing 
+ * processed data to a Database. It initializes worker threads for both parsing
  * and writing, enabling asynchronous data handling.
  *
  * PRODUCER: Parser reads and processes the text file in 'batches' and puts
@@ -42,6 +43,8 @@ public class BackendService {
             writerThread.start();
             parserThread.start();
 
+            parserThread.join(); // Wait for parser to complete
+            writerThread.join(); // Wait for writer to complete
 
         } catch (Exception e) {
             e.printStackTrace();

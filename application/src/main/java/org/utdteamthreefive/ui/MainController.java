@@ -19,7 +19,7 @@ import javafx.stage.Stage;
 import org.utdteamthreefive.backend.util.FileParseHandle;
 import org.utdteamthreefive.backend.SampleClass;
 
-import javax.swing.*;
+// import javax.swing.*;
 import java.io.File;
 import java.util.List;
 import javafx.scene.layout.VBox;
@@ -30,6 +30,7 @@ public class MainController implements Initializable {
     private Stage stage;
     private Scene scene;
     private Parent root;
+    private Table table;
 
     @FXML
     private HBox fileRow; // fx:id="fileRow" in FXML
@@ -119,7 +120,7 @@ public class MainController implements Initializable {
                 scene = tabPane.getScene();
                 if (scene != null) {
                     // Query the FlowPane Node so that the Table can be added to it
-                    Table table = new Table();
+                    table = new Table();
                     FlowPane flowPane = (FlowPane) scene.lookup(".table-flow-pane");
                     if (flowPane != null) {
                         flowPane.getChildren().add(table.getTableView());
@@ -128,6 +129,9 @@ public class MainController implements Initializable {
                 }
             });
         }
+
+        // This is for the threads to update the table after parsing
+        FileParseHandle.setTableInstance(table);
     }
 
     /**

@@ -4,21 +4,25 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox alignment="CENTER" prefHeight="1024.0" prefWidth="1440.0" styleClass="main-vbox" stylesheets="@table.css, @tab.css" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.utdteamthreefive.ui.MainController">
+<VBox alignment="CENTER" prefHeight="1024.0" prefWidth="1440.0" styleClass="main-vbox"
+    stylesheets="@table.css, @tab.css" xmlns="http://javafx.com/javafx/17.0.2-ea"
+    xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.utdteamthreefive.ui.MainController">
     <children>
-        <TabPane fx:id="tabPane" prefHeight="1024.0" prefWidth="1440.0" tabClosingPolicy="UNAVAILABLE">
+        <TabPane fx:id="tabPane" prefHeight="1024.0" prefWidth="1440.0"
+            tabClosingPolicy="UNAVAILABLE">
             <Tab closable="false" styleClass="tab" text="Sentence Builder">
 
             </Tab>
             <Tab closable="false" styleClass="tab" text="Upload Files">
                 <content>
                     <VBox alignment="CENTER">
-                        <opaqueInsets>
-                            <Insets />
-                        </opaqueInsets>
                         <padding>
                             <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                         </padding>
+                        <children>
+                            <Label fx:id="fileUploadText" />
+                            <Button text="Select File" onAction="#onUploadFileButtonClick" />
+                        </children>
                     </VBox>
                 </content>
             </Tab>
@@ -29,7 +33,8 @@
                             <Insets bottom="20.0" left="20.0" right="20.0" top="5.0" />
                         </padding>
                         <children>
-                            <FlowPane alignment="TOP_CENTER" prefHeight="1000.0" prefWidth="1400.0" styleClass="table-flow-pane" />
+                            <FlowPane alignment="TOP_CENTER" prefHeight="1000.0" prefWidth="1400.0"
+                                styleClass="table-flow-pane" />
                         </children>
                     </VBox>
                 </content>

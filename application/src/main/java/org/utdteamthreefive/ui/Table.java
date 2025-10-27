@@ -28,8 +28,7 @@ import javafx.util.converter.IntegerStringConverter;
 public class Table {
     TableView<Word> table;
 
-    // Sample data for now
-    ObservableList<Word> data = FXCollections.observableArrayList();
+    private ObservableList<Word> data = FXCollections.observableArrayList();
 
     ObservableList<Word> selectedItems;
 
@@ -47,6 +46,11 @@ public class Table {
         // Allow table to expand when columns are resized
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
 
+        // Populate the table
+        syncTableWithDatabase();
+    }
+
+    public void syncTableWithDatabase() {
         // Open DB connection and query for words
         conn = DatabaseManager.open();
 
@@ -76,6 +80,7 @@ public class Table {
             e.printStackTrace();
         } finally {
             DatabaseManager.close(conn);
+            table.setItems(data);
         }
     }
 

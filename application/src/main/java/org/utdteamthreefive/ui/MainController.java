@@ -18,6 +18,7 @@ import org.utdteamthreefive.backend.SampleClass;
 import javax.swing.*;
 import java.io.File;
 import java.util.List;
+import javafx.scene.layout.VBox;
 
 public class MainController {
     private Stage stage;
@@ -26,6 +27,8 @@ public class MainController {
 
     @FXML
     private HBox fileRow; // fx:id="fileRow" in FXML
+    private ProgressBar progressBar; // fx:id="progressBar" in FXML
+    private VBox uploadContainer;
 
     /**
      * @author Rommel Isaac Baldivas
@@ -53,8 +56,6 @@ public class MainController {
             e.printStackTrace();
         }
     }
-
-    private ProgressBar progressBar; // fx:id="progressBar" in FXML
 
     @FXML
     protected void onSwitchToUploadClick(ActionEvent event) {
@@ -86,7 +87,13 @@ public class MainController {
     }
 
     public void initialize() {
-        // Bind progress bar width to 30% of the HBox width
-        progressBar.prefWidthProperty().bind(fileRow.widthProperty().multiply(0.3));
+        // Add sample file tabs for testing
+        addFileTab("example.txt");
+        addFileTab("report.pdf");
+    }
+
+    public void addFileTab(String fileName) {
+        FileTab fileTab = new FileTab(fileName);
+        uploadContainer.getChildren().add(fileTab);
     }
 }

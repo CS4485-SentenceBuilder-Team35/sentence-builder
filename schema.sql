@@ -10,17 +10,16 @@ CREATE TABLE IF NOT EXISTS FILES(
 );
 CREATE TABLE IF NOT EXISTS WORD(
     word_id INT PRIMARY KEY AUTO_INCREMENT,
-    word_token VARCHAR(50) UNIQUE,
-    total_count INT,
-    start_count INT,
-    end_count INT,
-    type_ ENUM('alpha', 'misc'),
-    CHECK (total_count > 0)
+    word_token VARCHAR(50) NOT NULL UNIQUE,
+    total_count INT NOT NULL DEFAULT 0,
+    start_count INT NOT NULL DEFAULT 0,
+    end_count INT NOT NULL DEFAULT 0,
+    type_ ENUM('alpha', 'misc') NOT NULL
 );
 CREATE TABLE IF NOT EXISTS WORD_FOLLOW(
-    from_word_id INT,
-    to_word_id INT,
-    total_count INT,
+    from_word_id INT NOT NULL,
+    to_word_id INT NOT NULL,
+    total_count INT NOT NULL DEFAULT 0,
     PRIMARY KEY(from_word_id, to_word_id),
     FOREIGN KEY (from_word_id) REFERENCES WORD(word_id) ON DELETE CASCADE,
     FOREIGN KEY (to_word_id) REFERENCES WORD(word_id) ON DELETE CASCADE

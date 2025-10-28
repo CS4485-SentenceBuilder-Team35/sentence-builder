@@ -26,13 +26,9 @@ import javafx.util.converter.IntegerStringConverter;
  * populate it with the WORD table from the database
  */
 public class Table {
-    TableView<Word> table;
-
-    private ObservableList<Word> data = FXCollections.observableArrayList();
-
-    ObservableList<Word> selectedItems;
-
-    private Connection conn;
+    TableView<Word> table; // The TableView UI component
+    private ObservableList<Word> data = FXCollections.observableArrayList(); // Holds Word objects for the TableView
+    private Connection conn; // DB connection
 
     public Table() {
         // Establish the TableView
@@ -50,6 +46,10 @@ public class Table {
         syncTableWithDatabase();
     }
 
+    /**
+     * Uses a prepared statement to query the WORD table
+     * and populate the TableView with the results
+     */
     public void syncTableWithDatabase() {
         // Open DB connection and query for words
         conn = DatabaseManager.open();
@@ -92,6 +92,11 @@ public class Table {
         }
     }
 
+    /**
+     * This programmatically fills out the columns for the TableView
+     * 
+     * @return List of TableColumns for the TableView
+     */
     public ArrayList<TableColumn<Word, ?>> setupColumns() {
         // Setup the columns
         TableColumn<Word, String> wordTokenCol = new TableColumn<Word, String>("Text");

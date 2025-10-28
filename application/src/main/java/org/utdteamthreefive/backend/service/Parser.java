@@ -28,7 +28,7 @@ public class Parser implements Runnable {
 
     private static final Logger logger = Logger.getLogger(Parser.class.getName());
 
-    private static final Pattern WORD_WITH_OPTIONAL_COMMA = Pattern.compile("\\w+,?");
+    private static final Pattern WORD_WITH_PUNCTUATION = Pattern.compile("\\w+[,.!?]?[\"')\\]]*");
     private static final Pattern ENDS_SENT = Pattern.compile(".*[.!?][\"')\\]]*$");
 
     private final Path path;
@@ -83,16 +83,28 @@ public class Parser implements Runnable {
             while ((line = reader.readLine()) != null) {
                 processed += line.getBytes(StandardCharsets.UTF_8).length + 1;
                 String[] tokens = line.split("\\s+");
-                for (String token : tokens) {
-                    if (token.isEmpty())
+                for (String rawToken : tokens) {
+                    if (rawToken.isEmpty())
                         continue;
-                    
-                    token = token.toLowerCase(Locale.ROOT);
+
+                    // Preserve raw token for sentence-end detection, then normalize
+                    boolean endsSentence = ENDS_SENT.matcher(rawToken).matches();
+                    String token = normalizeToken(rawToken);
+                    if (token == null || token.isEmpty()) {
+                        // nothing meaningful after stripping punctuation
+                        if (endsSentence) {
+                            prevWord = null;
+                            lastWord = null;
+                            atSentenceStart = true;
+                        }
+                        continue;
+                    }
 
                     String type = classifyType(token);
                     if ("alpha".equals(type)) {
                         seenTokens++;
-                        recordToken(token, type, 1, atSentenceStart ? 1 : 0, 0);
+                        // add end count if token ends the sentence, add begin count if at sentence start
+                        recordToken(token, type, 1, atSentenceStart ? 1 : 0, endsSentence ? 1 : 0);
                         if (prevWord != null)
                             bigramCounts.merge(new Batch.BigramKey(prevWord, token), 1, Integer::sum);
                         prevWord = token;
@@ -100,14 +112,12 @@ public class Parser implements Runnable {
                         atSentenceStart = false;
                     }
 
-                    if (ENDS_SENT.matcher(token).matches()) {
-                        if (lastWord != null)
-                            wordCounts.get(lastWord).end += 1;
+                    if (endsSentence) {
                         prevWord = null;
                         lastWord = null;
                         atSentenceStart = true;
                     }
-
+                
                     // Flush when:
                     // - processed tokens reach the flush interval
                     // - OR unique word count exceeds threshold
@@ -137,9 +147,24 @@ public class Parser implements Runnable {
      * @return a string label representing the token type
      */
     private static String classifyType(String token) {
-        if (WORD_WITH_OPTIONAL_COMMA.matcher(token).matches())
+        if (WORD_WITH_PUNCTUATION.matcher(token).matches())
             return "alpha";
         return "misc";
+    }
+
+    /**
+     * Normalize a raw token by lower-casing and stripping leading/trailing punctuation
+     * and surrounding quotes/brackets. Returns null or empty string when nothing
+     * remains after normalization.
+     */
+    private static String normalizeToken(String raw) {
+        if (raw == null) return null;
+        String s = raw.toLowerCase(Locale.ROOT).strip();
+        // strip leading non-alphanumeric (quotes, brackets, etc.)
+        s = s.replaceAll("^[^\\p{Alnum}]+", "");
+        // strip trailing non-alphanumeric (punctuation, quotes, brackets, etc.)
+        s = s.replaceAll("[^\\p{Alnum}]+$", "");
+        return s;
     }
 
     /**

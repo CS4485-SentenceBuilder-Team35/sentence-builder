@@ -34,8 +34,11 @@ public class MainController implements Initializable {
 
     @FXML
     private HBox fileRow; // fx:id="fileRow" in FXML
+    @FXML
     private ProgressBar progressBar; // fx:id="progressBar" in FXML
+    @FXML
     private VBox uploadContainer;
+    @FXML
     private TabPane tabPane;
 
     /**

@@ -23,8 +23,14 @@ public class DatabaseManager {
             java.nio.charset.StandardCharsets.UTF_8);
     private static final String DB_HOST = EnvConfig.get("DB_HOST");
 
-    private static final String URL = "jdbc:mysql://" + DB_HOST + ":" + DB_PORT + "/" + ENCODED_DB
-            + "?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
+    private static final String URL =
+            "jdbc:mysql://" + DB_HOST + ":" + DB_PORT + "/" + ENCODED_DB
+        + "?useSSL=false"
+        + "&allowPublicKeyRetrieval=true"
+        + "&serverTimezone=UTC"
+        + "&useUnicode=true&characterEncoding=UTF-8"
+        + "&cachePrepStmts=true&prepStmtCacheSize=256&prepStmtCacheSqlLimit=2048"
+        + "&rewriteBatchedStatements=true";
 
     private DatabaseManager() {
     } // Private constructor to prevent instantiation

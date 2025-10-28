@@ -41,7 +41,7 @@ public class BackendService {
 
         try {
             Path path = Paths.get(filePath);
-            BlockingQueue<Batch> queue = new ArrayBlockingQueue<>(5); // bounded = back-pressure
+            BlockingQueue<Batch> queue = new ArrayBlockingQueue<>(64); // bounded = back-pressure
 
             Parser parser = new Parser(path, queue, 10_000, 5_000, progress -> Platform.runLater(() -> fileTab.setProgress(progress))); // tune thresholds
             DBInserter dbWriter = new DBInserter(path, queue);
@@ -52,8 +52,8 @@ public class BackendService {
             writerThread.start();
             parserThread.start();
 
-            parserThread.join(); // Wait for parser to complete
-            writerThread.join(); // Wait for writer to complete
+            parserThread.join();
+            writerThread.join();
 
         } catch (Exception e) {
             e.printStackTrace();

@@ -67,7 +67,9 @@ public class Parser implements Runnable {
         this.flushEveryTokens = flushEveryTokens;
         this.flushUniqueThreshold = flushUniqueThreshold;
         this.progressCallback = progressCallback;
-        this.totalBytes = Files.size(path);
+        long sz = -1;
+        try { sz = Files.size(path); } catch (Exception ignore) {}
+        this.totalBytes = sz;
     }
 
     /**
@@ -140,16 +142,25 @@ public class Parser implements Runnable {
                     }
                 }
             }
-            flush(processed, false);
-            batchQueue.put(Batch.end(processed));
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
             try {
+                // final, explicit flush
+                flush(processed, true);
+            } catch (InterruptedException ignore) {
+                Thread.currentThread().interrupt();
+            }
+            try {
+                // exactly one END marker
                 batchQueue.put(Batch.end(processed));
-            } catch (InterruptedException ignored) {
+                logger.info("🧵 Parser queued END for " + path);
+            } catch (InterruptedException ignore) {
+                Thread.currentThread().interrupt();
             }
         }
     }
+
 
     /**
      * Determines the classification type of a token alpha or misc.
@@ -209,9 +220,8 @@ public class Parser implements Runnable {
      * @throws InterruptedException if the queue operation is interrupted
      */
     private void flush(long processed, boolean end) throws InterruptedException {
-        if (wordCounts.isEmpty() && bigramCounts.isEmpty() && !end)
-            return;
-        
+        if (wordCounts.isEmpty() && bigramCounts.isEmpty() && !end) return;
+
         logger.info("🚚 Sending batch with " + wordCounts.size() + " words and " + bigramCounts.size() + " bigrams");
 
         var words = new ArrayList<Batch.WordDelta>(wordCounts.size());

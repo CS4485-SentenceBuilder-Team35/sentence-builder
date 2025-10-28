@@ -89,7 +89,8 @@ public class MainController implements Initializable {
                 .showOpenMultipleDialog((Stage) ((Node) event.getSource()).getScene().getWindow());
 
         for (int i = 0; i < files.size(); i++) {
-            FileParseHandle.ParseFile(files.get(i).getAbsolutePath());
+            FileTab fileTab = addFileTab(files.get(i).getName());
+            FileParseHandle.ParseFile(files.get(i).getAbsolutePath(), table);
         }
     }
 
@@ -97,17 +98,11 @@ public class MainController implements Initializable {
     protected void onGenerateSentenceButtonClick(ActionEvent event) {
     }
 
-    // public void initialize() {
-    // // Add sample file tabs for testing
-    // addFileTab("example.txt");
-    // addFileTab("report.pdf");
-    // }
-
-    // public FileTab addFileTab(String fileName) {
-    // FileTab fileTab = new FileTab(fileName);
-    // uploadContainer.getChildren().add(fileTab);
-    // return fileTab;
-    // }
+    public FileTab addFileTab(String fileName) {
+        FileTab fileTab = new FileTab(fileName);
+        uploadContainer.getChildren().add(fileTab);
+        return fileTab;
+    }
 
     /**
      * @author Rommel Isaac Baldivas
@@ -132,9 +127,6 @@ public class MainController implements Initializable {
                 }
             });
         }
-
-        // This is for the threads to update the table after parsing
-        FileParseHandle.setTableInstance(table);
     }
 
     /**

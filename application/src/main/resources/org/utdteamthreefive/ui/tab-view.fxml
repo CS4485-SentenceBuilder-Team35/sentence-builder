@@ -11,11 +11,10 @@
         <TabPane fx:id="tabPane" prefHeight="1024.0" prefWidth="1440.0"
             tabClosingPolicy="UNAVAILABLE">
             <Tab closable="false" styleClass="tab" text="Sentence Builder">
-
             </Tab>
             <Tab closable="false" styleClass="tab" text="Upload Files">
                 <content>
-                    <VBox alignment="CENTER">
+                    <VBox fx:id="uploadContainer" alignment="CENTER">
                         <padding>
                             <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
                         </padding>

@@ -58,8 +58,13 @@ public class Table {
         try {
             PreparedStatement selectStatement = conn.prepareStatement(wordQuery);
             var rs = selectStatement.executeQuery();
+
+            System.out.println("Clearing table data. Current size: " + data.size());
             data.clear();
+
+            int rowCount = 0;
             while (rs.next()) {
+                rowCount++;
                 // Make sure that type maps to WordType enum
                 WordType type = null;
                 String typeStr = rs.getString("type_");
@@ -75,12 +80,15 @@ public class Table {
                 Word word = new Word(rs.getInt("word_id"), rs.getString("word_token"), rs.getInt("total_count"),
                         rs.getInt("start_count"), rs.getInt("end_count"), type);
                 data.add(word);
+                rowCount++;
             }
+
+            System.out.println("Added " + rowCount + " rows to table. New size: " + data.size());
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
+            table.refresh();
             DatabaseManager.close(conn);
-            table.setItems(data);
         }
     }
 

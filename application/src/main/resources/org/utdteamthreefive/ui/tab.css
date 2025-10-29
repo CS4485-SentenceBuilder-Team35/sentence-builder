@@ -26,6 +26,8 @@
     -fx-border-width: 0;
 }
 
+/* Upload tab styles */
+
 .upload-vbox {
     -fx-spacing: 16px;
 }

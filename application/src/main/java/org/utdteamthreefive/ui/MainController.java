@@ -109,30 +109,39 @@ public class MainController implements Initializable {
      */
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        // Set up responsive tab widths if TabPane exists
-        if (tabPane != null) {
-            setupResponsiveTabWidths();
-
-            // Use Platform.runLater to ensure the TabPane is in the scene graph
-            Platform.runLater(() -> {
-                scene = tabPane.getScene();
-                if (scene != null) {
-                    // Query the FlowPane Node so that the Table can be added to it
-                    table = new Table();
-                    FlowPane flowPane = (FlowPane) scene.lookup(".table-flow-pane");
-                    if (flowPane != null) {
-                        flowPane.getChildren().add(table.getTableView());
-                        FlowPane.setMargin(table.getTableView(), new Insets(16.0, 0, 16.0, 0));
-                    }
-                }
-            });
+        if (tabPane == null) {
+            System.err.println("Cannot find TabPane with fx:id 'tabPane'");
+            return;
         }
+
+        // Set up responsive tab widths if TabPane exists
+        setupResponsiveTabWidths();
+
+        // Use Platform.runLater to ensure the TabPane is in the scene graph
+        Platform.runLater(() -> {
+            scene = tabPane.getScene();
+            if (scene == null) {
+                System.err.println("TabPane is not yet part of a Scene.");
+                return;
+            }
+            // Query the FlowPane Node so that the Table can be added to it
+            table = new Table();
+            FlowPane flowPane = (FlowPane) scene.lookup(".table-flow-pane");
+            if (flowPane == null) {
+                System.err.println("FlowPane is not found.");
+                return;
+            }
+            flowPane.getChildren().add(table.getTableView());
+            FlowPane.setMargin(table.getTableView(), new Insets(16.0, 0, 16.0, 0));
+        });
+
     }
 
     /**
+     * The event listener will listen for width changes and update tab
+     * widths accordingly
+     * 
      * @author Rommel Isaac Baldivas
-     *         The event listener will listen for width changes and update tab
-     *         widths accordingly
      */
     private void setupResponsiveTabWidths() {
         tabPane.widthProperty().addListener((observable, oldValue, newValue) -> {

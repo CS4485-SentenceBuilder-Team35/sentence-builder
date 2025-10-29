@@ -11,7 +11,6 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.HBox;
-import javafx.scene.control.Label;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
@@ -19,7 +18,6 @@ import javafx.stage.Stage;
 import org.utdteamthreefive.backend.util.FileParseHandle;
 import org.utdteamthreefive.backend.SampleClass;
 
-// import javax.swing.*;
 import java.io.File;
 import java.util.List;
 import javafx.scene.layout.VBox;
@@ -37,9 +35,9 @@ public class MainController implements Initializable {
     @FXML
     private ProgressBar progressBar; // fx:id="progressBar" in FXML
     @FXML
-    private VBox uploadContainer;
+    private VBox uploadFileListContainer; // fx:id="uploadFileListContainer" in FXML
     @FXML
-    private TabPane tabPane;
+    private TabPane tabPane; // fx:id="tabPane" in FXML
 
     /**
      * @author Rommel Isaac Baldivas
@@ -100,11 +98,16 @@ public class MainController implements Initializable {
 
     public FileTab addFileTab(String fileName) {
         FileTab fileTab = new FileTab(fileName);
-        uploadContainer.getChildren().add(fileTab);
+        uploadFileListContainer.getChildren().add(fileTab);
         return fileTab;
     }
 
     /**
+     * The initialize method is called automatically after all FXML
+     * members have been injected. It is used to perform any necessary setup for the
+     * controller such as responsive widths, initializing UI components, and adding
+     * the Table to the FlowPane.
+     *
      * @author Rommel Isaac Baldivas
      */
     @Override

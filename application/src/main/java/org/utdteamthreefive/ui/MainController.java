@@ -7,7 +7,8 @@ import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -17,11 +18,17 @@ import org.utdteamthreefive.backend.SampleClass;
 import javax.swing.*;
 import java.io.File;
 import java.util.List;
+import javafx.scene.layout.VBox;
 
 public class MainController {
     private Stage stage;
     private Scene scene;
     private Parent root;
+
+    @FXML
+    private HBox fileRow; // fx:id="fileRow" in FXML
+    private ProgressBar progressBar; // fx:id="progressBar" in FXML
+    private VBox uploadContainer;
 
     /**
      * @author Rommel Isaac Baldivas
@@ -54,32 +61,40 @@ public class MainController {
     protected void onSwitchToUploadClick(ActionEvent event) {
         SampleClass sampleClass = new SampleClass();
 
-        try
-        {
+        try {
             Parent root = FXMLLoader.load(getClass().getResource("upload-view.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.getScene().setRoot(root);
             stage.show();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @FXML
-    protected void onUploadFileButtonClick(ActionEvent event){
+    protected void onUploadFileButtonClick(ActionEvent event) {
         FileChooser fileChooser = new FileChooser();
-        List<File> files = fileChooser.showOpenMultipleDialog( (Stage) ((Node)event.getSource()).getScene().getWindow());
+        List<File> files = fileChooser
+                .showOpenMultipleDialog((Stage) ((Node) event.getSource()).getScene().getWindow());
 
-        for(int i = 0; i < files.size(); i++)
-        {
+        for (int i = 0; i < files.size(); i++) {
             FileParseHandle.ParseFile(files.get(i).getAbsolutePath());
         }
     }
 
     @FXML
-    protected void onGenerateSentenceButtonClick(ActionEvent event)
-    {
+    protected void onGenerateSentenceButtonClick(ActionEvent event) {
+    }
 
+    public void initialize() {
+        // Add sample file tabs for testing
+        addFileTab("example.txt");
+        addFileTab("report.pdf");
+    }
+
+    public FileTab addFileTab(String fileName) {
+        FileTab fileTab = new FileTab(fileName);
+        uploadContainer.getChildren().add(fileTab);
+        return fileTab;
     }
 }

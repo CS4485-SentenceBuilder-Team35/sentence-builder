@@ -5,6 +5,9 @@ import java.util.concurrent.*;
 import java.util.logging.Logger;
 
 import org.utdteamthreefive.backend.models.Batch;
+import org.utdteamthreefive.ui.FileTab;
+
+import javafx.application.Platform;
 
 /**
  * PRODUCER - CONSUMER pattern with a BlockingQueue between Parser and
@@ -26,7 +29,7 @@ public class BackendService {
     private static final Logger logger = Logger.getLogger(BackendService.class.getName());
 
     // call this from JavaFX controller (no progress bar)
-    public static void processFile(String filePath) {
+    public static void processFile(String filePath, FileTab fileTab) {
 
         logger.info("✅ Starting processing for file: " + filePath);
 
@@ -34,7 +37,7 @@ public class BackendService {
             Path path = Paths.get(filePath);
             BlockingQueue<Batch> queue = new ArrayBlockingQueue<>(5); // bounded = back-pressure
 
-            Parser parser = new Parser(path, queue, 10_000, 5_000); // tune thresholds
+            Parser parser = new Parser(path, queue, 10_000, 5_000, progress -> Platform.runLater(() -> fileTab.setProgress(progress))); // tune thresholds
             DBInserter dbWriter = new DBInserter(path, queue);
 
             Thread parserThread = new Thread(parser, "parser-producer");

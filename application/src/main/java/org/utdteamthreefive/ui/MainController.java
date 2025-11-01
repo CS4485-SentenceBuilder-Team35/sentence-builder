@@ -83,12 +83,14 @@ public class MainController implements Initializable {
     @FXML
     protected void onUploadFileButtonClick(ActionEvent event) {
         FileChooser fileChooser = new FileChooser();
-        List<File> files = fileChooser
+        List<File> files =   fileChooser
                 .showOpenMultipleDialog((Stage) ((Node) event.getSource()).getScene().getWindow());
 
-        for (int i = 0; i < files.size(); i++) {
-            FileTab fileTab = addFileTab(files.get(i).getName());
-            FileParseHandle.ParseFile(files.get(i).getAbsolutePath(), table);
+        if (files == null || files.isEmpty()) return;
+
+        for (File file : files) {
+            FileTab fileTab = addFileTab(file.getName()); 
+            FileParseHandle.ParseFile(file.getAbsolutePath(), table, fileTab);
         }
     }
 

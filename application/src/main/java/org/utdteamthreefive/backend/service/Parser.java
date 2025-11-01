@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.regex.Pattern;
 import java.util.logging.Logger;
+import java.util.function.DoubleConsumer;
 
 import org.utdteamthreefive.backend.models.Batch;
 
@@ -35,7 +36,9 @@ public class Parser implements Runnable {
     private final BlockingQueue<Batch> batchQueue;
     private final int flushEveryTokens;
     private final int flushUniqueThreshold;
-
+    private final DoubleConsumer progressCallback;
+    private final long totalBytes;
+    
     /**
      * Internal helper class for tracking counts and classification type
      * for individual tokens.
@@ -58,11 +61,13 @@ public class Parser implements Runnable {
      * @param flushEveryTokens the maximum number of tokens to process before flushing a batch
      * @param flushUniqueThreshold the maximum number of unique tokens or bigrams before flushing
      */
-    public Parser(Path path, BlockingQueue<Batch> queue, int flushEveryTokens, int flushUniqueThreshold) {
+    public Parser(Path path, BlockingQueue<Batch> queue, int flushEveryTokens, int flushUniqueThreshold, DoubleConsumer progressCallback) throws Exception {
         this.path = path;
         this.batchQueue = queue;
         this.flushEveryTokens = flushEveryTokens;
         this.flushUniqueThreshold = flushUniqueThreshold;
+        this.progressCallback = progressCallback;
+        this.totalBytes = Files.size(path);
     }
 
     /**
@@ -82,6 +87,12 @@ public class Parser implements Runnable {
             String line;
             while ((line = reader.readLine()) != null) {
                 processed += line.getBytes(StandardCharsets.UTF_8).length + 1;
+                
+                if (progressCallback != null && totalBytes > 0) {
+                    double progress = Math.min(1.0, (double) processed / totalBytes);
+                    progressCallback.accept(progress);
+                }
+
                 String[] tokens = line.split("\\s+");
                 for (String rawToken : tokens) {
                     if (rawToken.isEmpty())

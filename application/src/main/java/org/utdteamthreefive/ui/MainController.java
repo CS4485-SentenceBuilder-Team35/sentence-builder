@@ -1,6 +1,9 @@
 package org.utdteamthreefive.ui;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.scene.Node;
 import javafx.fxml.FXML;
@@ -9,6 +12,7 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.HBox;
 import javafx.scene.control.TabPane;
@@ -17,6 +21,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.utdteamthreefive.backend.util.FileParseHandle;
 import org.utdteamthreefive.backend.SampleClass;
+import org.utdteamthreefive.backend.service.BackendService;
 
 import java.io.File;
 import java.util.List;
@@ -29,6 +34,8 @@ public class MainController implements Initializable {
     private Scene scene;
     private Parent root;
     private Table table;
+    private List<File> filesToUpload;
+    private ObservableList<Node> filesToUploadUI;
 
     @FXML
     private HBox fileRow; // fx:id="fileRow" in FXML
@@ -38,6 +45,8 @@ public class MainController implements Initializable {
     private VBox uploadFileListContainer; // fx:id="uploadFileListContainer" in FXML
     @FXML
     private TabPane tabPane; // fx:id="tabPane" in FXML
+    @FXML
+    private Button uploadFilesButton; // fx:id="uploadFilesButton" in FXML
 
     /**
      * @author Rommel Isaac Baldivas
@@ -81,16 +90,39 @@ public class MainController implements Initializable {
     }
 
     @FXML
-    protected void onUploadFileButtonClick(ActionEvent event) {
+    protected void onSelectFilesButtonClick(ActionEvent event) {
         FileChooser fileChooser = new FileChooser();
-        List<File> files =   fileChooser
-                .showOpenMultipleDialog((Stage) ((Node) event.getSource()).getScene().getWindow());
+        fileChooser.setTitle("Select File(s) to Upload"); // Nice to have
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.dir"))); // Nice to have so we don't have to keep navigating from root
+        filesToUpload = fileChooser.showOpenMultipleDialog((Stage) ((Node) event.getSource()).getScene().getWindow());
 
-        if (files == null || files.isEmpty()) return;
+        for (File file : filesToUpload) {
+            addFileTab(file.getName());
+        }
 
-        for (File file : files) {
-            FileTab fileTab = addFileTab(file.getName()); 
-            FileParseHandle.ParseFile(file.getAbsolutePath(), table, fileTab);
+        // Enable upload button only if files are selected
+        uploadFilesButton.setDisable(filesToUpload == null || filesToUpload.isEmpty());
+    }
+
+    /**
+     * Click event is called when the user confirms upload of selected files
+     * 
+     * @param event
+     * @author Rommel Isaac Baldivas
+     */
+    @FXML
+    protected void onUploadFilesButtonClick(ActionEvent event) {
+        if (filesToUpload == null || filesToUpload.isEmpty())
+            return;
+
+        for (File file : filesToUpload) {
+            // Find the corresponding FileTab for this file
+            FileTab fileTab = filesToUploadUI.stream().filter(node -> node instanceof FileTab).map(node -> (FileTab) node).filter(tab -> tab.getFileNameLabel().getText().equals(file.getName())).findFirst().orElse(null);
+
+            // Start parsing the file and updating the progress bar in the FileTab
+            if (fileTab != null) {
+                FileParseHandle.ParseFile(file.getAbsolutePath(), table, fileTab);
+            }
         }
     }
 
@@ -98,9 +130,14 @@ public class MainController implements Initializable {
     protected void onGenerateSentenceButtonClick(ActionEvent event) {
     }
 
+    /**
+     * Adds a new FileTab to the UI.
+     * @param fileName
+     * @author Justin Yao and Rommel Isaac Baldivas
+     */
     public FileTab addFileTab(String fileName) {
         FileTab fileTab = new FileTab(fileName);
-        uploadFileListContainer.getChildren().add(fileTab);
+        filesToUploadUI.add(fileTab); // Add to observable list since it is bound to the UI container
         return fileTab;
     }
 
@@ -129,6 +166,7 @@ public class MainController implements Initializable {
                 System.err.println("TabPane is not yet part of a Scene.");
                 return;
             }
+
             // Query the FlowPane Node so that the Table can be added to it
             table = new Table();
             FlowPane flowPane = (FlowPane) scene.lookup(".table-flow-pane");
@@ -136,8 +174,18 @@ public class MainController implements Initializable {
                 System.err.println("FlowPane is not found.");
                 return;
             }
+
             flowPane.getChildren().add(table.getTableView());
             FlowPane.setMargin(table.getTableView(), new Insets(16.0, 0, 16.0, 0));
+
+            // Upload File Button is initially disabled until files are selected
+            uploadFilesButton.setDisable(true);
+
+            // Initialize the observable list for file tabs
+            filesToUploadUI = BackendService.getFilesFromDatabase();
+
+            // Bind the uploadFileListContainer to the observable list
+            Bindings.bindContentBidirectional(uploadFileListContainer.getChildren(), filesToUploadUI);
         });
 
     }
@@ -150,8 +198,7 @@ public class MainController implements Initializable {
      */
     private void setupResponsiveTabWidths() {
         tabPane.widthProperty().addListener((observable, oldValue, newValue) -> {
-            double availableWidth = newValue.doubleValue() - tabPane.getInsets().getLeft()
-                    - tabPane.getInsets().getRight();
+            double availableWidth = newValue.doubleValue() - tabPane.getInsets().getLeft() - tabPane.getInsets().getRight();
             int tabCount = tabPane.getTabs().size();
 
             if (tabCount > 0 && availableWidth > 0) {

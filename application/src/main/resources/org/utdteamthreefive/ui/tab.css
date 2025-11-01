@@ -32,7 +32,7 @@
     -fx-spacing: 16px;
 }
 
-.upload-button {
+.select-files-button, .upload-files-button {
     -fx-background-radius: 5px;
     -fx-text-fill: white;
     -fx-background-color: #007aff;

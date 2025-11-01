@@ -2,6 +2,9 @@ package org.utdteamthreefive.backend.util;
 
 import javafx.application.Platform;
 import javafx.concurrent.*;
+
+import java.util.logging.Logger;
+
 import org.utdteamthreefive.backend.service.BackendService;
 import org.utdteamthreefive.ui.Table;
 import org.utdteamthreefive.ui.FileTab;
@@ -10,6 +13,7 @@ import org.utdteamthreefive.ui.FileTab;
  * @author Aiden Martinez
  */
 public class FileParseHandle {
+    private static final Logger logger = Logger.getLogger(FileParseHandle.class.getName());
     public static void ParseFile(String path, Table table, FileTab fileTab) {
         Task<Void> fileParseTask = new Task<Void>() {
 
@@ -32,7 +36,7 @@ public class FileParseHandle {
 
                 Platform.runLater(() -> {
                     table.syncTableWithDatabase();
-                    System.out.println("Table update completed.");
+                    logger.info("Table update completed.");
                 });
             }
         };

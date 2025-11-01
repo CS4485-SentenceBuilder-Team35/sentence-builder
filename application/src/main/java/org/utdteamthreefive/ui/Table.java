@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.logging.Logger;
 
 import org.utdteamthreefive.backend.models.Word;
 import org.utdteamthreefive.backend.models.enums.WordType;
@@ -29,6 +30,7 @@ public class Table {
     TableView<Word> table; // The TableView UI component
     private ObservableList<Word> data = FXCollections.observableArrayList(); // Holds Word objects for the TableView
     private Connection conn; // DB connection
+    private static final Logger logger = Logger.getLogger(Table.class.getName());
 
     public Table() {
         // Establish the TableView
@@ -59,7 +61,7 @@ public class Table {
             PreparedStatement selectStatement = conn.prepareStatement(wordQuery);
             var rs = selectStatement.executeQuery();
 
-            System.out.println("Clearing table data. Current size: " + data.size());
+            logger.info("Clearing table data. Current size: " + data.size());
             data.clear();
 
             int rowCount = 0;
@@ -83,7 +85,7 @@ public class Table {
                 rowCount++;
             }
 
-            System.out.println("Added " + rowCount + " rows to table. New size: " + data.size());
+            logger.info("Added " + rowCount + " rows to table. New size: " + data.size());
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

@@ -4,17 +4,18 @@ import javafx.application.Platform;
 import javafx.concurrent.*;
 import org.utdteamthreefive.backend.service.BackendService;
 import org.utdteamthreefive.ui.Table;
+import org.utdteamthreefive.ui.FileTab;
 
 /**
  * @author Aiden Martinez
  */
 public class FileParseHandle {
-    public static void ParseFile(String path, Table table) {
+    public static void ParseFile(String path, Table table, FileTab fileTab) {
         Task<Void> fileParseTask = new Task<Void>() {
 
             @Override
             protected Void call() throws Exception {
-                BackendService.processFile(path);
+                BackendService.processFile(path, fileTab);
                 return null;
             }
 

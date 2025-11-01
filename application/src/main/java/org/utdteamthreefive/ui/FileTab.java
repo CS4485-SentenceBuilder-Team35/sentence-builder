@@ -33,7 +33,7 @@ public class FileTab extends HBox {
         HBox.setHgrow(leftSpacer, Priority.ALWAYS);
 
         // Progress bar
-        progressBar = new ProgressBar(0.5);
+        progressBar = new ProgressBar(0.0);
         progressBar.setPrefHeight(18);
         progressBar.prefWidthProperty().bind(this.widthProperty().multiply(0.5)); // 50% of HBox width
         progressBar.setMaxWidth(Region.USE_PREF_SIZE); // Don't let it grow beyond preferred size
@@ -42,10 +42,20 @@ public class FileTab extends HBox {
         getChildren().addAll(fileNameLabel, leftSpacer, progressBar);
     }
 
+    
     // Allow external control
     public void setProgress(double value) {
-        progressBar.setProgress(value);
+        double rangedValue  = Math.max(0.0, Math.min(1.0, value));
+        progressBar.setProgress(rangedValue);
+
+        // Optional: change bar color when done
+        if (rangedValue >= 1.0) {
+            progressBar.setStyle("-fx-accent: #4CAF50;"); // green when complete
+        } else {
+            progressBar.setStyle("-fx-accent: #2196F3;"); // default blue
+        }
     }
+
 
     public ProgressBar getProgressBar() {
         return progressBar;

@@ -16,12 +16,15 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.HBox;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.utdteamthreefive.backend.util.FileParseHandle;
 import org.utdteamthreefive.backend.SampleClass;
 import org.utdteamthreefive.backend.service.BackendService;
+import org.utdteamthreefive.backend.service.SentenceGenerator;
 
 import java.io.File;
 import java.util.List;
@@ -79,12 +82,14 @@ public class MainController implements Initializable {
     protected void onSwitchToUploadClick(ActionEvent event) {
         SampleClass sampleClass = new SampleClass();
 
-        try {
+        try
+        {
             Parent root = FXMLLoader.load(getClass().getResource("upload-view.fxml"));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
             stage.getScene().setRoot(root);
             stage.show();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -127,7 +132,22 @@ public class MainController implements Initializable {
     }
 
     @FXML
-    protected void onGenerateSentenceButtonClick(ActionEvent event) {
+    TextField inputField;
+    @FXML
+    Label sentenceField;
+    /**
+        Button to generate a sentence from the given text field
+     */
+    @FXML
+    protected void onGenerateSentenceButtonClick(ActionEvent event)
+    {
+        if(inputField == null || inputField.getText().equals(" "))
+        {
+            sentenceField.setText("Please Enter a Word to Begin the Sentence.");
+            return;
+        }
+
+        sentenceField.setText(SentenceGenerator.GenerateFromMostFrequent(inputField.getText()));
     }
 
     /**

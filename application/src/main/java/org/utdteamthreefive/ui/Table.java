@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.logging.Logger;
 
 import org.utdteamthreefive.backend.models.Word;
 import org.utdteamthreefive.backend.models.enums.WordType;
@@ -26,14 +27,10 @@ import javafx.util.converter.IntegerStringConverter;
  * populate it with the WORD table from the database
  */
 public class Table {
-    TableView<Word> table;
-
-    // Sample data for now
-    ObservableList<Word> data = FXCollections.observableArrayList();
-
-    ObservableList<Word> selectedItems;
-
-    private Connection conn;
+    TableView<Word> table; // The TableView UI component
+    private ObservableList<Word> data = FXCollections.observableArrayList(); // Holds Word objects for the TableView
+    private Connection conn; // DB connection
+    private static final Logger logger = Logger.getLogger(Table.class.getName());
 
     public Table() {
         // Establish the TableView
@@ -47,6 +44,15 @@ public class Table {
         // Allow table to expand when columns are resized
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
 
+        // Populate the table
+        syncTableWithDatabase();
+    }
+
+    /**
+     * Uses a prepared statement to query the WORD table
+     * and populate the TableView with the results
+     */
+    public void syncTableWithDatabase() {
         // Open DB connection and query for words
         conn = DatabaseManager.open();
 
@@ -54,8 +60,13 @@ public class Table {
         try {
             PreparedStatement selectStatement = conn.prepareStatement(wordQuery);
             var rs = selectStatement.executeQuery();
+
+            logger.info("Clearing table data. Current size: " + data.size());
             data.clear();
+
+            int rowCount = 0;
             while (rs.next()) {
+                rowCount++;
                 // Make sure that type maps to WordType enum
                 WordType type = null;
                 String typeStr = rs.getString("type_");
@@ -71,14 +82,23 @@ public class Table {
                 Word word = new Word(rs.getInt("word_id"), rs.getString("word_token"), rs.getInt("total_count"),
                         rs.getInt("start_count"), rs.getInt("end_count"), type);
                 data.add(word);
+                rowCount++;
             }
+
+            logger.info("Added " + rowCount + " rows to table. New size: " + data.size());
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
+            table.refresh();
             DatabaseManager.close(conn);
         }
     }
 
+    /**
+     * This programmatically fills out the columns for the TableView
+     * 
+     * @return List of TableColumns for the TableView
+     */
     public ArrayList<TableColumn<Word, ?>> setupColumns() {
         // Setup the columns
         TableColumn<Word, String> wordTokenCol = new TableColumn<Word, String>("Text");

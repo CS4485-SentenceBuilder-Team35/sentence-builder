@@ -23,7 +23,7 @@
 }
 
 /* Table column header styles */
-.column-header .label {
+.column-header > .label {
     -fx-alignment: CENTER;
     -fx-background-color: #007aff;
     -fx-text-fill: white;

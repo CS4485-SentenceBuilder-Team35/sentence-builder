@@ -19,37 +19,43 @@ public class FileTab extends HBox {
         setSpacing(10);
         setPadding(new Insets(10));
         setStyle("-fx-background-color: #EAF4FF; "
-               + "-fx-border-color: #B8CDE0; "
-               + "-fx-border-radius: 6; "
-               + "-fx-background-radius: 6;");
+                + "-fx-border-color: #B8CDE0; "
+                + "-fx-border-radius: 6; "
+                + "-fx-background-radius: 6;");
 
         // File name label
         fileNameLabel = new Label(fileName);
+        fileNameLabel.setMinWidth(Region.USE_PREF_SIZE); // Ensure label doesn't shrink below preferred size
+        fileNameLabel.setMaxWidth(Double.MAX_VALUE); // Allow label to grow if needed
 
-        // Fixed left spacer
+        // Spacer to push progress bar to middle
         Region leftSpacer = new Region();
-        leftSpacer.setPrefWidth(30);
+        HBox.setHgrow(leftSpacer, Priority.ALWAYS);
 
         // Progress bar
-        progressBar = new ProgressBar(0.5);
+        progressBar = new ProgressBar(0.0);
         progressBar.setPrefHeight(18);
-        HBox.setHgrow(progressBar, Priority.ALWAYS);
-
-        // Flexible spacer to make layout adaptive
-        Region flexSpacer = new Region();
-        HBox.setHgrow(flexSpacer, Priority.ALWAYS);
-
-        // Bind progress bar width to 30% of this FileTab width
-        progressBar.prefWidthProperty().bind(widthProperty().multiply(0.3));
+        progressBar.prefWidthProperty().bind(this.widthProperty().multiply(0.5)); // 50% of HBox width
+        progressBar.setMaxWidth(Region.USE_PREF_SIZE); // Don't let it grow beyond preferred size
 
         // Add all elements
-        getChildren().addAll(fileNameLabel, leftSpacer, progressBar, flexSpacer);
+        getChildren().addAll(fileNameLabel, leftSpacer, progressBar);
     }
 
+    
     // Allow external control
     public void setProgress(double value) {
-        progressBar.setProgress(value);
+        double rangedValue  = Math.max(0.0, Math.min(1.0, value));
+        progressBar.setProgress(rangedValue);
+
+        // Optional: change bar color when done
+        if (rangedValue >= 1.0) {
+            progressBar.setStyle("-fx-accent: #4CAF50;"); // green when complete
+        } else {
+            progressBar.setStyle("-fx-accent: #2196F3;"); // default blue
+        }
     }
+
 
     public ProgressBar getProgressBar() {
         return progressBar;

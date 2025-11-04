@@ -1,8 +1,10 @@
 package org.utdteamthreefive.ui;
 
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.TextField;
+import org.utdteamthreefive.backend.service.SentenceGenerator;
 
 public class TextBarController {
 
@@ -13,21 +15,19 @@ public class TextBarController {
     private Button generateButton;
 
     /**
-     * Called when user clicks the "Generate Sentence" button.
-     * For now, just logs the input text to console.
+     Button to generate a sentence from the given text field
+     TODO: implement algorithm selection
+     @author Aiden Martinez
      */
     @FXML
-    private void onGenerateClick() {
-        String userInput = inputField.getText();
-
-        if (userInput == null || userInput.trim().isEmpty()) {
-            System.out.println("[TextBar] No input entered.");
-        } else {
-            System.out.println("[TextBar] User entered: " + userInput);
-            // TODO: later integrate with the actual sentence generator
+    protected void onGenerateClick(ActionEvent event)
+    {
+        if(inputField == null || inputField.getText().equals(" "))
+        {
+            sentenceField.setText("Please Enter a Word to Begin the Sentence.");
+            return;
         }
 
-        // Optional: clear the text field after submit
-        inputField.clear();
+        sentenceField.setText(SentenceGenerator.GenerateFromMostFrequent(inputField.getText()));
     }
 }

@@ -131,24 +131,6 @@ public class MainController implements Initializable {
         }
     }
 
-    @FXML
-    TextField inputField;
-    @FXML
-    Label sentenceField;
-    /**
-        Button to generate a sentence from the given text field
-     */
-    @FXML
-    protected void onGenerateSentenceButtonClick(ActionEvent event)
-    {
-        if(inputField == null || inputField.getText().equals(" "))
-        {
-            sentenceField.setText("Please Enter a Word to Begin the Sentence.");
-            return;
-        }
-
-        sentenceField.setText(SentenceGenerator.GenerateFromMostFrequent(inputField.getText()));
-    }
 
     /**
      * Adds a new FileTab to the UI.

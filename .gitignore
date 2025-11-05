@@ -40,3 +40,6 @@ replay_pid*
 # If you only want to ignore a module env too, this still works:
 # application/.env
 application/src/main/java/org/utdteamthreefive/backend/service/Test_algo.java
+
+# Temporary Input Files
+/resources/input_files/*.part*

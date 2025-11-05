@@ -43,7 +43,7 @@ public class BackendService {
             Path path = Paths.get(filePath);
             BlockingQueue<Batch> queue = new ArrayBlockingQueue<>(64); // bounded = back-pressure
 
-            Parser parser = new Parser(path, queue, 10_000, 5_000, progress -> Platform.runLater(() -> fileTab.setProgress(progress))); // tune thresholds
+            Parser parser = new Parser(path, queue, 10_000, 5_000, progress -> Platform.runLater(() -> logger.info("Parser progress: " + progress)));
             DBInserter dbWriter = new DBInserter(path, queue);
 
             Thread parserThread = new Thread(parser, "parser-producer");
@@ -59,6 +59,19 @@ public class BackendService {
             e.printStackTrace();
         }
     }
+
+    /**
+     * New idea:
+     * Separate the file into chunks
+     * Each chunk is parsed by a separate Parser thread
+     * Each Parser thread puts its batches into a shared BlockingQueue
+     * A fixed number of DBInserter threads consume from the shared BlockingQueue
+     * This allows for parallel parsing and writing, improving throughput
+     * @param filePath
+     * @param fileTab
+     * @return 
+     */
+    // public static void processFile(String filePath, FileTab fileTab) {}
 
     /**
      * Fetches the list of files previously processed and stored in the database.

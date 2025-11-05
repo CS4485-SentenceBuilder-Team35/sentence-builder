@@ -32,8 +32,10 @@
     -fx-spacing: 16px;
 }
 
-.select-files-button, .upload-files-button {
-    -fx-background-radius: 5px;
+.select-files-button, .upload-files-button, .generate-button {
+    -fx-background-radius: 6px;
     -fx-text-fill: white;
     -fx-background-color: #007aff;
+    -fx-font-size: 14px;
+    -fx-padding: 8px 16px;
 }

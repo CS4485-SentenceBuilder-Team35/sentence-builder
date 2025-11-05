@@ -11,6 +11,7 @@
         <TabPane fx:id="tabPane" prefHeight="1024.0" prefWidth="1440.0"
             tabClosingPolicy="UNAVAILABLE">
             <Tab closable="false" styleClass="tab" text="Sentence Builder">
+                <fx:include source="text-bar.fxml" />
             </Tab>
             <Tab closable="false" styleClass="tab" text="Upload Files">
                 <content>

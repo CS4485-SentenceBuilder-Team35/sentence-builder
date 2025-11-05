@@ -126,7 +126,8 @@ public class MainController implements Initializable {
 
             // Start parsing the file and updating the progress bar in the FileTab
             if (fileTab != null) {
-                FileParseHandle.ParseFile(file.getAbsolutePath(), table, fileTab);
+                // FileParseHandle.ParseFile(file.getAbsolutePath(), table, fileTab);
+                FileParseHandle.ParseFile(file, table, fileTab);
             }
         }
     }

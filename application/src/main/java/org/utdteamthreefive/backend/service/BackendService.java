@@ -3,7 +3,6 @@ package org.utdteamthreefive.backend.service;
 import java.nio.file.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.util.Observable;
 import java.util.concurrent.*;
 import java.util.logging.Logger;
 
@@ -61,17 +60,36 @@ public class BackendService {
     }
 
     /**
-     * New idea:
-     * Separate the file into chunks
-     * Each chunk is parsed by a separate Parser thread
-     * Each Parser thread puts its batches into a shared BlockingQueue
-     * A fixed number of DBInserter threads consume from the shared BlockingQueue
-     * This allows for parallel parsing and writing, improving throughput
-     * @param filePath
-     * @param fileTab
-     * @return 
+     * Starts a ChunkParser thread to process the given chunk file.  
+     * This is the PRODUCER in the PRODUCER-CONSUMER pattern.
+     * @param chunkPath
+     * @param batchQueue
+     * @param chunkIndex for unique thread naming
+     * @return
+     * @author Rommel Isaac Baldivas
      */
-    // public static void processFile(String filePath, FileTab fileTab) {}
+    public static Thread processChunk(Path chunkPath, BlockingQueue<Batch> batchQueue, int chunkIndex) {
+        ChunkParser chunkParser = new ChunkParser(chunkPath, batchQueue);
+        Thread chunkParserThread = new Thread(chunkParser, "chunk-parser-" + chunkIndex + "-" + chunkPath.getFileName());
+        chunkParserThread.start();
+        return chunkParserThread;
+    }
+
+    /**
+     * Will start a single DBInserter thread for a file to consume from the shared
+     * batch queue.  
+     * This is the CONSUMER in the PRODUCER-CONSUMER pattern.
+     * @param filePath the path of the file being processed
+     * @param batchQueue the queue to consume batches from
+     * @return the database inserter thread
+     * @author Rommel Isaac Baldivas
+     */
+    public static Thread startDBInserter(Path filePath, BlockingQueue<Batch> batchQueue) {
+        DatabaseInserter dbInserter = new DatabaseInserter(filePath, batchQueue);
+        Thread dbInserterThread = new Thread(dbInserter, "db-inserter-" + filePath.getFileName());
+        dbInserterThread.start();
+        return dbInserterThread;
+    }
 
     /**
      * Fetches the list of files previously processed and stored in the database.

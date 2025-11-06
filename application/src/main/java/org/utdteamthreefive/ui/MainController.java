@@ -27,7 +27,9 @@ import org.utdteamthreefive.backend.service.BackendService;
 import org.utdteamthreefive.backend.service.SentenceGenerator;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+
 import javafx.scene.layout.VBox;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -39,6 +41,7 @@ public class MainController implements Initializable {
     private Table table;
     private List<File> filesToUpload;
     private ObservableList<Node> filesToUploadUI;
+    private HashMap<File, FileTab> fileTabMap = new HashMap<>();
 
     @FXML
     private HBox fileRow; // fx:id="fileRow" in FXML
@@ -102,7 +105,8 @@ public class MainController implements Initializable {
         filesToUpload = fileChooser.showOpenMultipleDialog((Stage) ((Node) event.getSource()).getScene().getWindow());
 
         for (File file : filesToUpload) {
-            addFileTab(file.getName());
+            FileTab fileTab = addFileTab(file.getName());
+            fileTabMap.put(file, fileTab);
         }
 
         // Enable upload button only if files are selected
@@ -120,16 +124,10 @@ public class MainController implements Initializable {
         if (filesToUpload == null || filesToUpload.isEmpty())
             return;
 
-        for (File file : filesToUpload) {
-            // Find the corresponding FileTab for this file
-            FileTab fileTab = filesToUploadUI.stream().filter(node -> node instanceof FileTab).map(node -> (FileTab) node).filter(tab -> tab.getFileNameLabel().getText().equals(file.getName())).findFirst().orElse(null);
+        // Disable the button to prevent multiple uploads
+        uploadFilesButton.setDisable(true);
 
-            // Start parsing the file and updating the progress bar in the FileTab
-            if (fileTab != null) {
-                // FileParseHandle.ParseFile(file.getAbsolutePath(), table, fileTab);
-                FileParseHandle.ParseFile(file, table, fileTab);
-            }
-        }
+        FileParseHandle.ParseFiles(filesToUpload, table, fileTabMap);
     }
 
 

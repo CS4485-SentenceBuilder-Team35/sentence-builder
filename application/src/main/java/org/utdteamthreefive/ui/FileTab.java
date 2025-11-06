@@ -55,10 +55,18 @@ public class FileTab extends HBox {
             progressBar.setStyle("-fx-accent: #2196F3;"); // default blue
         }
     }
+
+    public void startStyle() {
+        progressBar.setStyle("-fx-accent: #2196F3;");
+    }
     
-    public void done() {
+    public void doneStyle() {
         progressBar.setStyle("-fx-accent: #4CAF50;"); // green when complete
-        progressBar.setProgress(1.0);
+        // progressBar.setProgress(1.0);
+    }
+
+    public void errorStyle() {
+        progressBar.setStyle("-fx-accent: #F44336;"); // red on error
     }
 
 

@@ -39,3 +39,44 @@
     -fx-font-size: 14px;
     -fx-padding: 8px 16px;
 }
+
+.algo-choicebox {
+    -fx-background-radius: 6px;
+    -fx-text-fill: white;
+    -fx-background-color: #007aff;
+    -fx-font-size: 14px;
+    -fx-padding: 4px 2px 4px 2px;
+}
+
+/* Style the text inside the ChoiceBox */
+.algo-choicebox .label {
+    -fx-text-fill: white;
+}
+
+/* Style the ChoiceBox when it opens */
+.algo-choicebox .context-menu {
+    -fx-background-color: #007aff;
+    -fx-background-radius: 6px;
+}
+
+/* Style the menu items in the dropdown */
+.algo-choicebox .context-menu .menu-item {
+    -fx-background-color: #007aff;
+    -fx-text-fill: white;
+}
+
+/* Style the menu items when hovered */
+.algo-choicebox .context-menu .menu-item:focused, .algo-choicebox .context-menu .menu-item:hover {
+    -fx-background-color: #94bfff;
+    -fx-text-fill: black;
+}
+
+.sentence-output-label {
+    -fx-font-size: 16px;
+    -fx-text-fill: black;
+}
+
+.sentence-output-label-error {
+    -fx-font-size: 16px;
+    -fx-text-fill: red;
+}

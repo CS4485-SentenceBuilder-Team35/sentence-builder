@@ -5,10 +5,15 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+
+import java.util.logging.Logger;
+
 import org.utdteamthreefive.backend.service.SentenceGenerator;
 
 public class TextBarController {
+    private final Logger logger = Logger.getLogger(TextBarController.class.getName());
 
     @FXML
     private TextField inputField;
@@ -20,15 +25,16 @@ public class TextBarController {
     private ChoiceBox<String> algoChoice;
 
     @FXML
-    private TextField sentenceField;
+    private Label sentenceField;
 
+    /**
+     * @author Justin Yao
+     */
     @FXML
     private void initialize() {
         if (algoChoice != null) {
             algoChoice.setItems(FXCollections.observableArrayList(
-                    "Markov Chain",
-                    "N-gram",
-                    "Neural Model"));
+                    "Most Frequent"));
             algoChoice.getSelectionModel().clearSelection();
             algoChoice.setValue("Choose Algorithm");
         }
@@ -36,16 +42,12 @@ public class TextBarController {
 
     /**
      * Button to generate a sentence from the given text field.
-     * TODO: implement algorithm selection.
      *
-     * @author Aiden Martinez
+     * @author Aiden Martinez and Justin Yao
      */
     @FXML
     protected void onGenerateClick(ActionEvent event) {
-
-      /*   String userInput = inputField.getText();
-
-        if (userInput == null || userInput.trim().isEmpty()) {
+        /*if (userInput == null || userInput.trim().isEmpty()) {
             System.out.println("[TextBar] No input entered.");
         } else {
             System.out.println("[TextBar] User entered: " + userInput);
@@ -59,14 +61,20 @@ public class TextBarController {
          if (inputField == null || inputField.getText() == null || inputField.getText().trim().isEmpty()) {
             if (sentenceField != null) {
                 sentenceField.setText("Please enter a word to begin the sentence.");
-                System.out.println("Input field is empty.");
+                sentenceField.getStyleClass().add("sentence-output-label-error");
+                logger.warning("Input field is empty.");
             }
             return;
         }
 
         if (sentenceField != null) {
             sentenceField.setText(SentenceGenerator.GenerateFromMostFrequent(inputField.getText().trim()));
-            System.out.println("Generated sentence for input: " + inputField.getText().trim());
+            try {
+                sentenceField.getStyleClass().remove("sentence-output-label-error");
+            } catch (Exception e) {
+                // Ignore if the style class was not present
+            }
+            logger.info("Generated sentence for input: " + inputField.getText().trim());
         }
              
     }

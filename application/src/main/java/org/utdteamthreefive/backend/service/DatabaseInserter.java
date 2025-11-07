@@ -40,6 +40,13 @@ public class DatabaseInserter implements Runnable {
             conn = DatabaseManager.open();
             conn.setAutoCommit(false);
             conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
+            
+            // Set lock wait timeout to fail fast on deadlocks
+            try (PreparedStatement stmt = conn.prepareStatement("SET SESSION innodb_lock_wait_timeout = 5")) {
+                stmt.execute();
+            } catch (SQLException e) {
+                logger.warning("Could not set lock wait timeout: " + e.getMessage());
+            }
 
             // 1. Get file id from FILES table and create if not exists
             fileId = ensureFileId();
@@ -53,35 +60,21 @@ public class DatabaseInserter implements Runnable {
             while(!Thread.currentThread().isInterrupted()) {
                 Batch batch = batchQueue.take();
 
-                // Retry loop for transient errors
-                for (int attempt = 0;; attempt++) {
-                    try {
-                        insertOrUpdateWords(batch);
-                        insertOrUpdateBigrams(batch);
-                        conn.commit(); // Commit the transaction after successful batch processing
-                        if (batch.end) {
-                            updateFileTotals();
-                            conn.commit(); // Final commit for file totals
-                            logger.info("✅ DatabaseInserter received end marker, finishing for file: " + filePath.toString());
-                            return; // exit run method
-                        }
-                        break; // success, exit retry loop
-                    } catch (SQLException e) {
-                        try {
-                            conn.rollback();
-                        } catch (SQLException rollbackEx) {
-                            logger.severe("❌ Failed to rollback transaction: " + rollbackEx.getMessage());
-                        }
-
-                        if (isTransient(e) && attempt < 2) {
-                            long sleep = backoff(attempt);
-                            logger.warning("🔁 Deadlock/timeout, retrying batch in " + sleep + "ms: " + e.getMessage());
-                            Thread.sleep(sleep);
-                            continue;
-                        }
-
-                        logger.severe("❌ Fatal SQL after retries in " + filePath.toString() + ": " + e.getMessage());
-                        throw e;
+                // Process the batch with retry logic
+                boolean success = processBatchWithRetry(batch);
+                if (!success) {
+                    logger.severe("❌ Failed to process batch after all retries for file: " + filePath.toString());
+                    return;
+                }
+                
+                if (batch.end) {
+                    // Update file totals with retry logic
+                    if (updateFileTotalsWithRetry()) {
+                        logger.info("✅ DatabaseInserter received end marker, finishing for file: " + filePath.toString());
+                        return; // exit run method
+                    } else {
+                        logger.severe("❌ Failed to update file totals after all retries for file: " + filePath.toString());
+                        return;
                     }
                 }
             }
@@ -103,6 +96,100 @@ public class DatabaseInserter implements Runnable {
     }
 
     //#region HELPER METHODS
+    
+    /**
+     * Process a batch with proper retry logic for deadlock handling.
+     */
+    private boolean processBatchWithRetry(Batch batch) {
+        final int MAX_RETRIES = 5; // Increased for deadlock scenarios
+        
+        for (int attempt = 0; attempt < MAX_RETRIES; attempt++) {
+            try {
+                insertOrUpdateWords(batch);
+                insertOrUpdateBigrams(batch);
+                conn.commit(); // Commit the transaction after successful batch processing
+                return true; // Success
+                
+            } catch (SQLException e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackEx) {
+                    logger.severe("Failed to rollback transaction: " + rollbackEx.getMessage());
+                }
+
+                if (isTransient(e) && attempt < MAX_RETRIES - 1) {
+                    long sleep = backoff(attempt);
+                    logger.warning("Deadlock/timeout detected (attempt " + (attempt + 1) + "/" + MAX_RETRIES + 
+                                 "), retrying batch in " + sleep + "ms: " + e.getMessage());
+                    try {
+                        Thread.sleep(sleep);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        logger.severe("Thread interrupted during retry backoff");
+                        return false;
+                    }
+                    
+                    // Add jitter to reduce collision probability
+                    try {
+                        Thread.sleep((long)(Math.random() * 100));
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        return false;
+                    }
+                    continue;
+                }
+
+                logger.severe("Fatal SQL error after " + MAX_RETRIES + " retries in " + 
+                             filePath.toString() + ": " + e.getMessage());
+                e.printStackTrace();
+                return false;
+            } catch (Exception e) {
+                logger.severe("Unexpected error processing batch: " + e.getMessage());
+                e.printStackTrace();
+                return false;
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Update file totals with retry logic.
+     */
+    private boolean updateFileTotalsWithRetry() {
+        final int MAX_RETRIES = 3;
+        
+        for (int attempt = 0; attempt < MAX_RETRIES; attempt++) {
+            try {
+                updateFileTotals();
+                conn.commit(); // Final commit for file totals
+                return true;
+                
+            } catch (SQLException e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackEx) {
+                    logger.severe("Failed to rollback file totals transaction: " + rollbackEx.getMessage());
+                }
+                
+                if (isTransient(e) && attempt < MAX_RETRIES - 1) {
+                    long sleep = backoff(attempt);
+                    logger.warning("Retrying file totals update in " + sleep + "ms: " + e.getMessage());
+                    try {
+                        Thread.sleep(sleep);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        return false;
+                    }
+                    continue;
+                }
+
+                logger.severe("Failed to update file totals after " + MAX_RETRIES + " retries: " + e.getMessage());
+                return false;
+            }
+        }
+        return false;
+    }
+
     private static boolean isTransient(SQLException e) {
         int code = e.getErrorCode(); // MySQL vendor code
         return code == 1213 || code == 1205 || e instanceof SQLTransientException;
@@ -157,13 +244,20 @@ public class DatabaseInserter implements Runnable {
         long batchTotal = 0L;
 
         try (PreparedStatement stmt = conn.prepareStatement(upsertSql)) {
-            for (WordDelta wd : batch.wordDeltas) {
+            // Sort word deltas by token to reduce deadlock probability
+            List<WordDelta> sortedDeltas = new ArrayList<>(batch.wordDeltas);
+            sortedDeltas.sort((a, b) -> a.token().compareTo(b.token()));
+            
+            int batchCount = 0;
+            final int BATCH_SIZE = 500; // Smaller batches to reduce deadlock window
+            
+            for (WordDelta wd : sortedDeltas) {
                 stmt.setString(1, wd.token());
                 stmt.setInt(2, wd.total());
                 stmt.setInt(3, wd.begin());
                 stmt.setInt(4, wd.end());
 
-                // 🧠 Normalize type to match ENUM('alpha', 'misc')
+                // Normalize type to match ENUM('alpha', 'misc')
                 String type = wd.type().toLowerCase();
                 if (!type.equals("alpha")) {
                     type = "misc";
@@ -171,10 +265,20 @@ public class DatabaseInserter implements Runnable {
                 stmt.setString(5, type);
 
                 batchTotal += wd.total();
-
                 stmt.addBatch();
+                batchCount++;
+
+                // Execute in smaller chunks to reduce deadlock window
+                if (batchCount >= BATCH_SIZE) {
+                    stmt.executeBatch();
+                    batchCount = 0;
+                }
             }
-            stmt.executeBatch();
+            
+            // Execute remaining statements
+            if (batchCount > 0) {
+                stmt.executeBatch();
+            }
         }
         wordsThisFile += batchTotal;
     }
@@ -221,7 +325,28 @@ public class DatabaseInserter implements Runnable {
         // 2) Resolve IDs in bulk (words should already exist from insertOrUpdateWords in this same transaction)
         Map<String, Long> idMap = fetchWordIdsBulk(conn, needed);
 
-        // 3) Batch insert/merge
+        // 3) Sort bigrams by from_word_id, then to_word_id to reduce deadlock probability
+        List<BigramDelta> sortedBigrams = new ArrayList<>(batch.bigramDeltas);
+        sortedBigrams.sort((a, b) -> {
+            Long aFromId = idMap.get(a.key().first());
+            Long bFromId = idMap.get(b.key().first());
+            if (aFromId == null && bFromId == null) return 0;
+            if (aFromId == null) return 1;
+            if (bFromId == null) return -1;
+            
+            int fromCompare = aFromId.compareTo(bFromId);
+            if (fromCompare != 0) return fromCompare;
+            
+            Long aToId = idMap.get(a.key().second());
+            Long bToId = idMap.get(b.key().second());
+            if (aToId == null && bToId == null) return 0;
+            if (aToId == null) return 1;
+            if (bToId == null) return -1;
+            
+            return aToId.compareTo(bToId);
+        });
+
+        // 4) Batch insert/merge with smaller batch sizes
         String upsert = """
             INSERT INTO word_follow (from_word_id, to_word_id, total_count)
             VALUES (?, ?, ?)
@@ -230,7 +355,9 @@ public class DatabaseInserter implements Runnable {
 
         try (PreparedStatement ps = conn.prepareStatement(upsert)) {
             int batchSize = 0;
-            for (BigramDelta bd : batch.bigramDeltas) {
+            final int MAX_BATCH_SIZE = 500; // Smaller batches to reduce deadlock window
+            
+            for (BigramDelta bd : sortedBigrams) {
                 Long fromId = idMap.get(bd.key().first());
                 Long toId   = idMap.get(bd.key().second());
                 if (fromId == null || toId == null) continue; // should be rare if words inserted first
@@ -239,10 +366,19 @@ public class DatabaseInserter implements Runnable {
                 ps.setLong(2, toId);
                 ps.setInt(3, bd.count());
                 ps.addBatch();
+                batchSize++;
 
-                if (++batchSize % 1000 == 0) ps.executeBatch(); // reasonable chunk
+                // Execute in smaller chunks to reduce deadlock window
+                if (batchSize >= MAX_BATCH_SIZE) {
+                    ps.executeBatch();
+                    batchSize = 0;
+                }
             }
-            ps.executeBatch();
+            
+            // Execute remaining statements
+            if (batchSize > 0) {
+                ps.executeBatch();
+            }
         }
     }
 

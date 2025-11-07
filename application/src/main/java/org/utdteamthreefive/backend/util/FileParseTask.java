@@ -1,9 +1,11 @@
 package org.utdteamthreefive.backend.util;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -34,7 +36,7 @@ public class FileParseTask extends Task<Void> {
     private FileTab fileTab;
     private List<File> chunkFiles;
     private LinkedBlockingQueue<Batch> chunkQueue = new LinkedBlockingQueue<>();
-    private final int CHUNK_SIZE = 16 * 1024; // 16KB
+    private final int CHUNK_SIZE = 16 * 1024; // 16k tokens per chunk
     private ThreadPoolExecutor chunkProcessorPool;
 
     public FileParseTask(File file, Table table, FileTab fileTab, ThreadPoolExecutor chunkProcessorPool) {
@@ -56,23 +58,61 @@ public class FileParseTask extends Task<Void> {
             return null;
         }
 
-        // Split file into chunks
+        // Split file into chunks of tokens
         int bytesRead;
         int chunkIndex = 0;
         long totalProcessed = 0;
 
-        // Update progress for file reading phase (0-50% of total progress)
-        try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file))) {
-            byte[] buffer = new byte[CHUNK_SIZE];
-            while ((bytesRead = bis.read(buffer)) != -1) {
+        // Update progress for file reading phase (0-25% of total progress)
+        // Create chunks based on number of tokens so that words are not split in between chunks
+        try (BufferedReader br = Files.newBufferedReader(filePath)){
+            StringBuilder chunkBuilder = new StringBuilder();
+            int tokenCount = 0;
+            List<String> lines = br.readAllLines();
+            for (String line : lines) {
+                String[] tokens = line.split("\\s+");
+                
+                // Process each token in the line
+                for (String token : tokens) {
+                    if (token.trim().isEmpty()) continue; // Skip empty tokens
+                    tokenCount++;
+                }
+                
+                // Add the complete line to the current chunk
+                chunkBuilder.append(line).append(System.lineSeparator());
+                
+                // Check if we should create a new chunk after adding this complete line
+                if (tokenCount >= CHUNK_SIZE) {
+                    // Write current chunk to file
+                    File chunkFile = new File(file.getParent(), file.getName() + ".part" + chunkIndex++);
+                    try (FileOutputStream fos = new FileOutputStream(chunkFile)) {
+                        fos.write(chunkBuilder.toString().getBytes(StandardCharsets.UTF_8));
+                    }
+                    chunkFiles.add(chunkFile);
+
+                    // Reset for next chunk
+                    chunkBuilder.setLength(0);
+                    tokenCount = 0;
+
+                    // Update progress as we read the file (0-25% range)
+                    totalProcessed += chunkFile.length();
+                    if (fileSize > 0) {
+                        double readProgress = (double) totalProcessed / fileSize * 0.25; // First quarter of progress
+                        updateProgress(readProgress, 1.0);
+                    }
+                }
+            }
+
+            // Write any remaining tokens as the last chunk
+            if (chunkBuilder.length() > 0) {
                 File chunkFile = new File(file.getParent(), file.getName() + ".part" + chunkIndex++);
                 try (FileOutputStream fos = new FileOutputStream(chunkFile)) {
-                    fos.write(buffer, 0, bytesRead);
+                    fos.write(chunkBuilder.toString().getBytes());
                 }
                 chunkFiles.add(chunkFile);
 
-                // Update progress as we read the file (0-25% range)
-                totalProcessed += bytesRead;
+                // Update progress for the last chunk
+                totalProcessed += chunkFile.length();
                 if (fileSize > 0) {
                     double readProgress = (double) totalProcessed / fileSize * 0.25; // First quarter of progress
                     updateProgress(readProgress, 1.0);
@@ -80,20 +120,48 @@ public class FileParseTask extends Task<Void> {
             }
         }
 
+        // OLD CODE FOR BYTE-BASED CHUNKING
+        // try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file))) {
+        //     byte[] buffer = new byte[CHUNK_SIZE];
+        //     while ((bytesRead = bis.read(buffer)) != -1) {
+        //         File chunkFile = new File(file.getParent(), file.getName() + ".part" + chunkIndex++);
+        //         try (FileOutputStream fos = new FileOutputStream(chunkFile)) {
+        //             fos.write(buffer, 0, bytesRead);
+        //         }
+        //         chunkFiles.add(chunkFile);
+
+        //         // Update progress as we read the file (0-25% range)
+        //         totalProcessed += bytesRead;
+        //         if (fileSize > 0) {
+        //             double readProgress = (double) totalProcessed / fileSize * 0.25; // First quarter of progress
+        //             updateProgress(readProgress, 1.0);
+        //         }
+        //     }
+        // }
+
         // Start DBInserter to consume from the shared chunk queue BEFORE submitting chunk tasks
         Thread dbInserterThread = BackendService.startDBInserter(filePath, chunkQueue);
 
         // Submit chunk processing tasks to the shared thread pool
         List<java.util.concurrent.Future<?>> chunkFutures = new ArrayList<>();
-        for (int iFile = 0; iFile < chunkFiles.size(); iFile++) {
-            File chunkFile = chunkFiles.get(iFile);
 
-            Future<?> future = chunkProcessorPool.submit(() -> {
-                ChunkParser chunkParser = new ChunkParser(chunkFile.toPath(), chunkQueue);
-                chunkParser.run(); // Run synchronously in the thread pool thread
-            });
-            chunkFutures.add(future);
-        }
+        // Multiple Chunks
+        // for (int iFile = 0; iFile < chunkFiles.size(); iFile++) {
+        //     File chunkFile = chunkFiles.get(iFile);
+
+        //     Future<?> future = chunkProcessorPool.submit(() -> {
+        //         ChunkParser chunkParser = new ChunkParser(chunkFile.toPath(), chunkQueue);
+        //         chunkParser.run(); // Run synchronously in the thread pool thread
+        //     });
+        //     chunkFutures.add(future);
+        // }
+
+        // One Chunk 
+        Future<?> future = chunkProcessorPool.submit(() -> {
+            ChunkParser chunkParser = new ChunkParser(file.toPath(), chunkQueue);
+            chunkParser.run();
+        });
+        chunkFutures.add(future);
 
         // Wait for all chunk processing futures to complete
         for (int iChunk = 0; iChunk < chunkFutures.size(); iChunk++) {

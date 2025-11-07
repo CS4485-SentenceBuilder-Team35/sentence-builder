@@ -30,7 +30,7 @@ public class TextBarController {
                     "N-gram",
                     "Neural Model"));
             algoChoice.getSelectionModel().clearSelection();
-            algoChoice.setValue(null);
+            algoChoice.setValue("Choose Algorithm");
         }
     }
 
@@ -42,15 +42,32 @@ public class TextBarController {
      */
     @FXML
     protected void onGenerateClick(ActionEvent event) {
-        if (inputField == null || inputField.getText() == null || inputField.getText().trim().isEmpty()) {
+
+      /*   String userInput = inputField.getText();
+
+        if (userInput == null || userInput.trim().isEmpty()) {
+            System.out.println("[TextBar] No input entered.");
+        } else {
+            System.out.println("[TextBar] User entered: " + userInput);
+            sentenceField.setText("Generated sentence based on: " + userInput);
+            // TODO: later integrate with the actual sentence generator
+        }
+
+        // Optional: clear the text field after submit
+        inputField.clear();
+          */
+         if (inputField == null || inputField.getText() == null || inputField.getText().trim().isEmpty()) {
             if (sentenceField != null) {
                 sentenceField.setText("Please enter a word to begin the sentence.");
+                System.out.println("Input field is empty.");
             }
             return;
         }
 
         if (sentenceField != null) {
             sentenceField.setText(SentenceGenerator.GenerateFromMostFrequent(inputField.getText().trim()));
+            System.out.println("Generated sentence for input: " + inputField.getText().trim());
         }
+             
     }
 }

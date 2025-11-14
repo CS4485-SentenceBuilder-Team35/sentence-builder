@@ -76,7 +76,7 @@ public class DBReader {
     /**
      *  Given a word as text, returns all words that follow in descending order
      */
-    public ArrayList<String> SearchWordFollows(String word_token)
+    public ArrayList<String> SearchWordFollows(String word_token, boolean desc_order)
     {
         ArrayList<String> results = new ArrayList<>();
 
@@ -103,8 +103,18 @@ public class DBReader {
                     select word_token
                     from word as w, word_follow as wf
                     where wf.from_word_id = ? AND w.word_id = wf.to_word_id
-                    ORDER BY wf.total_count DESC;
+                    ORDER BY wf.total_count
                     """;
+            //sort query results
+            if(desc_order)
+            {
+                selectSql += " DESC;";
+            }
+            else
+            {
+                selectSql += " ASC;";
+            }
+
             try (PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
                 selectStmt.setInt(1, from_word_id);
                 //run query

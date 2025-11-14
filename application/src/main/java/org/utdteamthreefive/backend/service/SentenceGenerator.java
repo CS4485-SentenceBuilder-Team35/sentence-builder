@@ -1,6 +1,21 @@
 package org.utdteamthreefive.backend.service;
 import java.util.ArrayList;
+import java.util.Random;
 
+/**
+ * SentenceGenerator builds sentences using several different algorithms that
+ * rely on word data stored in the database. It can generate sentences based on:
+ *  - The most frequent next word relationships
+ *  - Randomly selected words from the entire vocabulary
+ *  - Random follow words starting from a user provided input
+ *
+ * Each method constructs a sentence word by word using queries from DBReader
+ * and returns the final sentence as formatted text.
+ * 
+ * @author Aisha Qureshi
+ * @author Aiden Martinez
+ * @author Zaeem Rashid
+ */
 public class SentenceGenerator {
 
     public static String GenerateFromMostFrequent(String initialInput)
@@ -78,5 +93,68 @@ public class SentenceGenerator {
         }
 
         return false;
+    }
+
+/**
+ * Builds a sentence by randomly choosing words until the target length is reached.
+ * @author Zaeem Rashid
+ */
+    public static String GenerateFromRandomWord(int targetLength) {
+        DBReader databaseReader = new DBReader();
+        ArrayList<String> allWords = databaseReader.GetAllWords();
+
+        if (allWords == null || allWords.isEmpty()) {
+            return "No words available in the database.";
+        }
+
+        Random random = new Random();
+        StringBuilder sentence = new StringBuilder();
+
+        String currentWord = allWords.get(random.nextInt(allWords.size()));
+        sentence.append(currentWord);
+        int sentenceLength = 1;
+
+        // Keep adding random words until we reach at least targetLength words
+        while (sentenceLength < targetLength) {
+            String nextWord = allWords.get(random.nextInt(allWords.size()));
+            sentence.append(" ").append(nextWord);
+            currentWord = nextWord;
+            sentenceLength++;
+        }
+
+        return sentence.toString() + ".";
+    }
+/**
+ * Generates a sentence by repeatedly choosing random valid follow-words until reaching the target length.
+ * @author Aisha Qureshi
+ */
+    public static String GenerateFromRandomFollow(String initialInput, int targetLength) {
+        if (initialInput == null || initialInput.trim().isEmpty()) {
+            return "Please enter a starting word.";
+        }
+
+        DBReader databaseReader = new DBReader();
+        Random random = new Random();
+
+        String sentence = initialInput.trim();
+        String[] input = sentence.split("\\s+");
+        String currentWord = input[input.length - 1].toLowerCase();
+        int sentenceLength = input.length;
+
+        while (sentenceLength < targetLength) {
+            ArrayList<String> follows = databaseReader.SearchWordFollows(currentWord);
+
+            // If no follow words exist, stop.
+            if (follows == null || follows.isEmpty()) {
+                break;
+            }
+
+            // Pick a random follow word
+            String nextWord = follows.get(random.nextInt(follows.size()));
+            sentence = sentence + " " + nextWord;
+            currentWord = nextWord;
+            sentenceLength++;
+        }
+        return sentence + ".";
     }
 }

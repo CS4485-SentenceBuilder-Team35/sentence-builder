@@ -2,6 +2,15 @@ package org.utdteamthreefive.backend.service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.logging.Logger;
+
+import org.utdteamthreefive.backend.util.EnvConfig;
+
+import com.openai.client.OpenAIClient;
+import com.openai.client.okhttp.OpenAIOkHttpClient;
+import com.openai.models.ChatModel;
+import com.openai.models.chat.completions.ChatCompletion;
+import com.openai.models.chat.completions.ChatCompletionCreateParams;
 
 /**
  * SentenceGenerator builds sentences using several different algorithms that
@@ -19,6 +28,7 @@ import java.util.Random;
  */
 public class SentenceGenerator {
 
+    private static final Logger logger = Logger.getLogger(SentenceGenerator.class.getName());
     /**
         Implements Most Frequent Algorithm, returning a generated sentence
      @author Aiden Martinez
@@ -166,8 +176,8 @@ public class SentenceGenerator {
     }
 
     /**
-        Check if the given word is in a given sentence.
-     @author Aiden Martinez
+     * Check if the given word is in a given sentence.
+     * @author Aiden Martinez
      */
     private static boolean IsInSentence(String sentence, String word)
     {
@@ -180,10 +190,10 @@ public class SentenceGenerator {
         return false;
     }
 
-/**
- * Builds a sentence by randomly choosing words until the target length is reached.
- * @author Zaeem Rashid
- */
+    /**
+     * Builds a sentence by randomly choosing words until the target length is reached.
+     * @author Zaeem Rashid
+     */
     public static String GenerateFromRandomWord(int targetLength) {
         DBReader databaseReader = new DBReader();
         ArrayList<String> allWords = databaseReader.GetAllWords();
@@ -209,10 +219,10 @@ public class SentenceGenerator {
 
         return sentence.toString() + ".";
     }
-/**
- * Generates a sentence by repeatedly choosing random valid follow-words until reaching the target length.
- * @author Aisha Qureshi
- */
+    /**
+     * Generates a sentence by repeatedly choosing random valid follow-words until reaching the target length.
+     * @author Aisha Qureshi
+     */
     public static String GenerateFromRandomFollow(String initialInput, int targetLength) {
         if (initialInput == null || initialInput.trim().isEmpty()) {
             return "Please enter a starting word.";
@@ -229,9 +239,13 @@ public class SentenceGenerator {
         while (sentenceLength < targetLength) {
             ArrayList<String> follows = databaseReader.SearchWordFollows(currentWord, true);
 
-            // If no follow words exist, stop.
+            // If no follow words exist, user helper function.
             if (follows == null || follows.isEmpty()) {
-                break;
+                String nextWord = GetRandomWord();
+                sentence = sentence + " " + nextWord;
+                currentWord = nextWord;
+                sentenceLength++;
+                continue;
             }
 
             // Pick a random follow word
@@ -243,8 +257,9 @@ public class SentenceGenerator {
         return sentence + ".";
     }
     /**
-        Return a random basic word to help continue the sentence
-     @author Aiden Martinez
+     * Return a random basic word to help continue the sentence
+     * This will be used as a fall back/catch all
+     * @author Aiden Martinez
      */
     private static String GetRandomWord()
     {
@@ -257,5 +272,72 @@ public class SentenceGenerator {
 
         Random random = new Random();
         return helperWords.get(random.nextInt(helperWords.size() - 1));
+    }
+
+    /**
+     * Uses OpenAI to smart-complete a sentence starting from initialInput.
+     * 
+     * @author Aisha Qureshi
+     * @author Zaeem Rashid
+     */
+    public static String GenerateFromOpenAI(String initialInput) {
+        if (initialInput == null || initialInput.trim().isEmpty()) {
+            return "Please enter some text to complete.";
+        }
+
+        // Read key from .env
+        String apiKey = EnvConfig.get("OPENAI_API_KEY");
+
+        if (apiKey == null || apiKey.isBlank()) {
+            logger.warning("OPENAI_API_KEY is missing — Smart generation unavailable.");
+            return "Error: No OpenAI API key found. Add OPENAI_API_KEY to .env file.";
+        }
+
+        OpenAIClient client = OpenAIOkHttpClient.builder()
+                .apiKey(apiKey)
+                .build();
+
+        ChatCompletionCreateParams params = ChatCompletionCreateParams.builder()
+            .model(ChatModel.GPT_5_1)
+            .addUserMessage(
+                "You will be given the beginning of a sentence.\n" +
+                "Write 1–2 natural sentences that CONTINUE it.\n" +
+                "Do NOT repeat or rephrase the beginning text.\n" +
+                "Return only the continuation, and make sure the final output ends with a period.\n\n" +
+                "Start: \"" + initialInput.trim() + "\""
+            )
+            .build();
+
+        ChatCompletion completion = client.chat().completions().create(params);
+
+        StringBuilder completionText = new StringBuilder();
+
+        completion.choices().stream()
+            .findFirst()
+            .ifPresent(choice -> {
+                String text = choice.message().content().orElse("");
+                completionText.append(text);
+            });
+
+        String continuation = completionText.toString().trim();
+        String start = initialInput.trim();
+
+        // Strip repetition of the start
+        if (continuation.toLowerCase().startsWith(start.toLowerCase())) {
+            continuation = continuation.substring(start.length()).trim();
+        }
+
+        if (continuation.isEmpty()) {
+            return start;
+        }
+
+        // Ensure exactly one space between start and continuation
+        String result = start + " " + continuation;
+
+        // making sure it ends with a period
+        if (!result.endsWith(".") && !result.endsWith("!") && !result.endsWith("?")) {
+            result = result + ".";
+        }
+        return result;
     }
 }

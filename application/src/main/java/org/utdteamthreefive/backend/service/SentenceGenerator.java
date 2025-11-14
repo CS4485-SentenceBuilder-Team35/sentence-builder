@@ -227,7 +227,7 @@ public class SentenceGenerator {
         int sentenceLength = input.length;
 
         while (sentenceLength < targetLength) {
-            ArrayList<String> follows = databaseReader.SearchWordFollows(currentWord);
+            ArrayList<String> follows = databaseReader.SearchWordFollows(currentWord, true);
 
             // If no follow words exist, stop.
             if (follows == null || follows.isEmpty()) {

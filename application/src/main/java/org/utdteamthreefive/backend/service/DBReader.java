@@ -13,10 +13,16 @@ import java.util.logging.Logger;
 /**
 * DBReader contains necessary methods for sentence building algorithms to query words from the database
 * Can be used to:
+
  * - Find the ID of a given word
  * - Find all words that follow a given word
  * - Find max number of times a word has ended a sentence
+ * - Lookup how often a specific word ends a sentence
+ * - Retrieve all words stored in the database (used for random algorithms)
+ 
 * @author Aiden Martinez
+* @author Zaeem Rashid
+* @author Aisha Qureshi
  */
 public class DBReader {
     private static final Logger logger = Logger.getLogger(DBReader.class.getName());
@@ -224,4 +230,38 @@ public class DBReader {
         //default
         return -1;
     }
+
+/*
+ *  Retrieves all words from the database for use in random sentence generation.
+ *  @author Aisha Qureshi
+ *  @author Zaeem Rashid
+ */
+    public ArrayList<String> GetAllWords() {
+        ArrayList<String> results = new ArrayList<>();
+        Connection conn = null;
+
+        try {
+            conn = DatabaseManager.open();
+            String selectSql = "SELECT word_token FROM word;";
+            try (PreparedStatement selectStmt = conn.prepareStatement(selectSql);
+                ResultSet rs = selectStmt.executeQuery()) {
+
+                int count = 0;
+                while (rs.next()) {
+                    results.add(rs.getString(1));
+                    count++;
+                }
+
+                if (count <= 0) {
+                    results = null;
+                }
+            }
+        } catch (SQLException e) {
+            logger.severe("SQL error: " + e.getMessage());
+        } finally {
+            DatabaseManager.close(conn);
+        }
+        return results;
+    }
+
 }

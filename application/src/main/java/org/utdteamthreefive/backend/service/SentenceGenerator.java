@@ -275,6 +275,71 @@ public class SentenceGenerator {
     }
 
     /**
+     * Generates a sentence by choosing words based on their frequency (weighted random).
+     * Words with higher occurrence counts have a higher probability of being selected.
+     * @author Aisha Qureshi
+     */
+    public static String GenerateFromWeightedRandom(String initialInput, int targetLength) {
+        if (initialInput == null || initialInput.trim().isEmpty()) {
+            return "Please enter a starting word.";
+        }
+
+        DBReader databaseReader = new DBReader();
+        Random random = new Random();
+
+        String sentence = initialInput.trim();
+        String[] input = sentence.split("\\s+");
+        String currentWord = input[input.length - 1].toLowerCase();
+        int sentenceLength = input.length;
+
+        while (sentenceLength < targetLength) {
+            ArrayList<String> followsWithFreq = databaseReader.SearchWordFollowsWithFrequency(currentWord);
+
+            // If no follow words exist, use helper function
+            if (followsWithFreq == null || followsWithFreq.isEmpty()) {
+                String nextWord = GetRandomWord();
+                sentence = sentence + " " + nextWord;
+                currentWord = nextWord;
+                sentenceLength++;
+                continue;
+            }
+
+            // Extract words and frequencies, calculate cumulative weights
+            ArrayList<String> words = new ArrayList<>();
+            ArrayList<Integer> frequencies = new ArrayList<>();
+            int totalWeight = 0;
+
+            for (String wordFreqPair : followsWithFreq) {
+                String[] parts = wordFreqPair.split(":");
+                String word = parts[0];
+                int frequency = Integer.parseInt(parts[1]);
+                words.add(word);
+                frequencies.add(frequency);
+                totalWeight += frequency;
+            }
+
+            // Weighted random selection
+            int randomValue = random.nextInt(totalWeight);
+            int cumulative = 0;
+            String nextWord = words.get(0); // fallback to first word
+
+            for (int i = 0; i < words.size(); i++) {
+                cumulative += frequencies.get(i);
+                if (randomValue < cumulative) {
+                    nextWord = words.get(i);
+                    break;
+                }
+            }
+
+            sentence = sentence + " " + nextWord;
+            currentWord = nextWord;
+            sentenceLength++;
+        }
+
+        return sentence + ".";
+    }
+
+    /**
      * Uses OpenAI to smart-complete a sentence starting from initialInput.
      * 
      * @author Aisha Qureshi

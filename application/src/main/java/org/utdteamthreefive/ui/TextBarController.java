@@ -34,7 +34,7 @@ public class TextBarController {
     private void initialize() {
         if (algoChoice != null) {
             algoChoice.setItems(FXCollections.observableArrayList(
-                    "Most Frequent", "Least Frequent", "Complete Random", "Random Follow", "Smart"));
+                    "Most Frequent", "Least Frequent", "Complete Random", "Weighted Random", "Random Follow", "Smart"));
             algoChoice.getSelectionModel().clearSelection();
             algoChoice.setValue("Choose Algorithm");
         }
@@ -88,6 +88,10 @@ public class TextBarController {
 
             case "Least Frequent":
                 result = SentenceGenerator.GenerateFromLeastFrequent(userInput);
+                break;
+
+            case "Weighted Random":
+                result = SentenceGenerator.GenerateFromWeightedRandom(userInput, 10);
                 break;
 
             case "Complete Random":

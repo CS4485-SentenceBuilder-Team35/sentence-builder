@@ -274,4 +274,75 @@ public class DBReader {
         return results;
     }
 
+     /**
+     * Given a word as text, returns all words that follow along with their frequencies.
+     * Returns an ArrayList of word tokens in descending order of frequency.
+     * This is used by the weighted random algorithm.
+     *
+     * @author Aisha Qureshi
+     */
+    public ArrayList<String> SearchWordFollowsWithFrequency(String word_token) {
+        ArrayList<String> results = new ArrayList<>();
+
+
+        // Get ID for the given word
+        int from_word_id = SearchWordID(word_token);
+        if (from_word_id == -1) {
+            logger.severe("Given word not found.");
+            return null;
+        }
+
+
+        // Open connection
+        Connection conn = null;
+        try {
+            conn = DatabaseManager.open();
+            if (conn == null) {
+                logger.severe("Failed to open database connection");
+                return null;
+            }
+
+
+            // Query to get word tokens and their frequencies, ordered by total_count descending
+            String selectSql = """
+                    select w.word_token, wf.total_count
+                    from word as w, word_follow as wf
+                    where wf.from_word_id = ? AND w.word_id = wf.to_word_id
+                    ORDER BY wf.total_count DESC
+                    """;
+
+
+            try (PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
+                selectStmt.setInt(1, from_word_id);
+                // run query
+                try (ResultSet rs = selectStmt.executeQuery()) {
+                    int count = 0;
+
+
+                    // Store word tokens with their frequencies as strings (word:frequency)
+                    while (rs.next()) {
+                        String word = rs.getString("word_token");
+                        int frequency = rs.getInt("total_count");
+                        results.add(word + ":" + frequency);
+                        count++;
+                    }
+
+
+                    // results were empty, return null
+                    if (count <= 0) {
+                        results = null;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            logger.severe("SQL error: " + e.getMessage());
+        } finally {
+            DatabaseManager.close(conn);
+        }
+
+
+        return results;
+    }
+
+
 }

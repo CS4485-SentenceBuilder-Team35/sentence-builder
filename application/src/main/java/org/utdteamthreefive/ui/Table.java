@@ -14,6 +14,7 @@ import org.utdteamthreefive.backend.models.Word;
 import org.utdteamthreefive.backend.models.enums.WordType;
 import org.utdteamthreefive.backend.util.DatabaseManager;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
@@ -53,45 +54,45 @@ public class Table {
      * and populate the TableView with the results
      */
     public void syncTableWithDatabase() {
-        // Open DB connection and query for words
-        conn = DatabaseManager.open();
+        // Open DB connection and query for wordss
+        Platform.runLater(() -> {
+            conn = DatabaseManager.open();
 
-        String wordQuery = "SELECT word_id, word_token, total_count, start_count, end_count, type_ FROM WORD";
-        try {
-            PreparedStatement selectStatement = conn.prepareStatement(wordQuery);
-            var rs = selectStatement.executeQuery();
+            String wordQuery = "SELECT word_id, word_token, total_count, start_count, end_count, type_ FROM WORD";
+            try {
+                PreparedStatement selectStatement = conn.prepareStatement(wordQuery);
+                var rs = selectStatement.executeQuery();
 
-            logger.info("Clearing table data. Current size: " + data.size());
-            data.clear();
+                logger.info("Refreshing TableView data. Current size: " + data.size());
+                data.clear();
 
-            int rowCount = 0;
-            while (rs.next()) {
-                rowCount++;
-                // Make sure that type maps to WordType enum
-                WordType type = null;
-                String typeStr = rs.getString("type_");
-                if (typeStr != null && typeStr.equalsIgnoreCase("alpha")) {
-                    type = WordType.alpha;
-                } else if (typeStr != null && typeStr.equalsIgnoreCase("misc")) {
-                    type = WordType.misc;
-                } else {
-                    throw new IllegalArgumentException("Unknown word type: " + typeStr);
+                while (rs.next()) {
+                    // Make sure that type maps to WordType enum
+                    WordType type = null;
+                    String typeStr = rs.getString("type_");
+                    if (typeStr != null && typeStr.equalsIgnoreCase("alpha")) {
+                        type = WordType.alpha;
+                    }
+                    else if (typeStr != null && typeStr.equalsIgnoreCase("misc")) {
+                        type = WordType.misc;
+                    }
+                    else {
+                        throw new IllegalArgumentException("Unknown word type: " + typeStr);
+                    }
+
+                    // Create Word object and add to data
+                    Word word = new Word(rs.getInt("word_id"), rs.getString("word_token"), rs.getInt("total_count"), rs.getInt("start_count"), rs.getInt("end_count"), type);
+                    data.add(word);
                 }
 
-                // Create Word object and add to data
-                Word word = new Word(rs.getInt("word_id"), rs.getString("word_token"), rs.getInt("total_count"),
-                        rs.getInt("start_count"), rs.getInt("end_count"), type);
-                data.add(word);
-                rowCount++;
+                logger.info("Updated TableView from database. New size: " + data.size());
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                table.refresh();
+                DatabaseManager.close(conn);
             }
-
-            logger.info("Added " + rowCount + " rows to table. New size: " + data.size());
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            table.refresh();
-            DatabaseManager.close(conn);
-        }
+        });
     }
 
     /**

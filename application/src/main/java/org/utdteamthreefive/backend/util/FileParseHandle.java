@@ -18,6 +18,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.logging.Logger;
 
 import org.utdteamthreefive.ui.Table;
+import org.utdteamthreefive.backend.models.Batch;
+import org.utdteamthreefive.backend.service.BackendService;
 import org.utdteamthreefive.ui.FileTab;
 
 /**
@@ -25,25 +27,8 @@ import org.utdteamthreefive.ui.FileTab;
  */
 public class FileParseHandle {
     private static final Logger logger = Logger.getLogger(FileParseHandle.class.getName());
-    private static final int maxThreads = Math.max(8, Runtime.getRuntime().availableProcessors()); // max threads based on CPU cores
-    // Shared thread pool for chunk processing to prevent thread explosion
-    private static final ThreadPoolExecutor chunkProcessorPool = new ThreadPoolExecutor(
-        4,
-        maxThreads,
-        60L, 
-        java.util.concurrent.TimeUnit.SECONDS,
-        new LinkedBlockingQueue<>(),
-        new ThreadFactory() {
-            private int count = 0;
-            @Override
-            public Thread newThread(Runnable r) {
-                Thread t = new Thread(r, "ChunkProcessor-" + count++);
-                t.setDaemon(true);
-                return t;
-            }
-        },
-        new ThreadPoolExecutor.CallerRunsPolicy()
-    );
+    private static LinkedBlockingQueue<Batch> batchQueue = new LinkedBlockingQueue<>();
+    private static Thread dbInserterThread = null;
 
     /**
      * Called from the UI thread to start parsing multiple files
@@ -54,13 +39,22 @@ public class FileParseHandle {
      */
     @SuppressWarnings("resource") // Executor is properly shutdown in background thread
     public static void ParseFiles(List<File> files, Table table, HashMap<File, FileTab> fileTabMap) {
+        // // Start DatabaseInserter only if not already running
+        if (dbInserterThread == null || !dbInserterThread.isAlive()) {
+            dbInserterThread = BackendService.startDBInserter(batchQueue, table);
+            logger.info("Started new DatabaseInserter thread: " + dbInserterThread.getName());
+        } else {
+            logger.info("Reusing existing DatabaseInserter thread: " + dbInserterThread.getName());
+        }
+
         // The executor limits the number of concurrent file parsing tasks to prevent us from using too much resources on different laptops
         ThreadPoolExecutor filePoolExecutor = new ThreadPoolExecutor(
-                8, 
-                16, // Does not compute available processors to allow more for chunks
-                60, 
+                8,
+                Runtime.getRuntime().availableProcessors(), // get the most available threads on the system
+                60,
                 java.util.concurrent.TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(),
+                // This is just a way to name the threads for debugging
                 new ThreadFactory() {
                     private int count = 0;
 
@@ -79,10 +73,10 @@ public class FileParseHandle {
             FileTab fileTab = fileTabMap.get(file);
 
             if (fileTab != null) {
-                // Make sure the progress bar is blue if re-uploaded
+                // Make sure the progress bar is blue if re-uploading
                 fileTab.startStyle();
 
-                FileParseTask task = new FileParseTask(file, table, fileTab, chunkProcessorPool);
+                FileParseTask task = new FileParseTask(file, fileTab, batchQueue);
                 
                 // Bind progress bar to task progress on JavaFX Application Thread
                 Platform.runLater(() -> {
@@ -98,13 +92,65 @@ public class FileParseHandle {
         // Shutdown file thread executor gracefully
         filePoolExecutor.shutdown();
         
-        // Wait for tasks to complete in a background thread to avoid blocking the UI thread
+        /**
+         * Wait for tasks to complete in a background thread to avoid blocking the UI thread
+         * This is a thread that continuously monitors the batchQueue
+         * Once the batchQueue is empty and has not changed size for a certain period,
+         * then it's assumed that the DatabaseInserter has finished processing all items and is shut down.
+         */
         new Thread(() -> {
             try {
+                // First wait for all file parsing tasks to complete
+                logger.info("Waiting for all file parsing tasks to complete...");
+                
                 if (!filePoolExecutor.awaitTermination(5, java.util.concurrent.TimeUnit.MINUTES)) {
-                    logger.warning("Executor did not terminate within 5 minutes, forcing shutdown");
+                    logger.warning("File parsing tasks did not complete within 5 minutes, forcing shutdown");
                     filePoolExecutor.shutdownNow();
                 }
+                
+                logger.info("All file parsing tasks completed. Waiting for DatabaseInserter to process remaining queue...");
+                
+                // Monitor queue size changes to provide progress updates
+                int previousQueueSize = batchQueue.size();
+                int stableCount = 0;
+                final int requiredStableChecks = 5; // Queue must be stable for 5 checks to ensure it's truly empty
+                final int checkInterval = 1000; // Check every second
+                int totalWaitTime = 0;
+                
+                logger.info("Initial queue size: " + previousQueueSize);
+                
+                while (true) {
+                    Thread.sleep(checkInterval);
+                    totalWaitTime += checkInterval;
+                    
+                    int currentQueueSize = batchQueue.size();
+                    
+                    if (currentQueueSize == previousQueueSize) {
+                        stableCount++;
+                        if (currentQueueSize == 0 && stableCount >= requiredStableChecks) {
+                            logger.info("Queue is empty and stable for " + (stableCount * checkInterval / 1000) + " seconds. DatabaseInserter processing completed.");
+                            // Stop the DatabaseInserter thread
+                            dbInserterThread.interrupt();   
+                            break;
+                        }
+                        if (currentQueueSize > 0 && stableCount >= requiredStableChecks * 3) {
+                            logger.warning("Queue size (" + currentQueueSize + ") has been stable for " + 
+                                         (stableCount * checkInterval / 1000) + " seconds. DatabaseInserter may be processing slowly.");
+                            // Reset counter to continue waiting instead of timing out
+                            stableCount = 0;
+                        }
+                    } else {
+                        // Queue size changed, reset stability counter
+                        stableCount = 0;
+                        if (totalWaitTime % 5000 == 0) { // Log every 5 seconds when active
+                            logger.info("Queue size: " + currentQueueSize + " (was " + previousQueueSize + "), still processing... (waited " + (totalWaitTime / 1000) + "s)");
+                        }
+                    }
+                    
+                    previousQueueSize = currentQueueSize;
+                }
+                
+                logger.info("DatabaseInserter finished processing all files. Total wait time: " + (totalWaitTime / 1000) + " seconds");
                 logger.info("All file parsing tasks completed successfully");
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -112,24 +158,6 @@ public class FileParseHandle {
                 logger.warning("File parsing was interrupted");
             }
         }, "FileParseCleanup").start();
-    }
-
-    /**
-     * Gracefully shutdown the shared chunk processor pool.
-     * Call this when the application is shutting down.
-     */
-    public static void shutdown() {
-        logger.info("Shutting down chunk processor pool");
-        chunkProcessorPool.shutdown();
-        try {
-            if (!chunkProcessorPool.awaitTermination(30, java.util.concurrent.TimeUnit.SECONDS)) {
-                logger.warning("Chunk processor pool did not terminate gracefully, forcing shutdown");
-                chunkProcessorPool.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            chunkProcessorPool.shutdownNow();
-        }
     }
 
     /**
@@ -208,5 +236,26 @@ public class FileParseHandle {
         fileTab.getProgressBar().progressProperty().bind(fileParseTask.progressProperty());
         Thread fileParseThread = new Thread(fileParseTask);
         fileParseThread.start();
+    }
+
+    /**
+     * Gracefully shutdown the DatabaseInserter when the application is closing.
+     * This method should only be called on application shutdown.
+     */
+    public static void shutdown() {
+        if (dbInserterThread != null && dbInserterThread.isAlive()) {
+            logger.info("Shutting down DatabaseInserter thread: " + dbInserterThread.getName());
+            dbInserterThread.interrupt();
+            try {
+                // Give it up to 10 seconds to finish current work
+                dbInserterThread.join(10000);
+                if (dbInserterThread.isAlive()) {
+                    logger.warning("DatabaseInserter did not shut down gracefully within 30 seconds");
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.warning("Interrupted while waiting for DatabaseInserter to shut down");
+            }
+        }
     }
 }

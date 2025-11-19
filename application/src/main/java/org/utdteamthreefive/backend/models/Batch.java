@@ -1,5 +1,6 @@
 package org.utdteamthreefive.backend.models;
 
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -47,6 +48,7 @@ public final class Batch {
     public final List<BigramDelta> bigramDeltas;
     public final long processedBytes;
     public final boolean end;
+    public final Path filePath;
 
     /**
      * Constructs a batch with word and bigram deltas.
@@ -57,20 +59,22 @@ public final class Batch {
      * @param processedBytes number of bytes processed so far
      * @param end indicates if this is the final batch
      */
-    public Batch(List<WordDelta> w, List<BigramDelta> b, long processedBytes, boolean end) {
+    public Batch(List<WordDelta> w, List<BigramDelta> b, long processedBytes, boolean end, Path filePath) {
         this.wordDeltas = w;
         this.bigramDeltas = b;
         this.processedBytes = processedBytes;
         this.end = end;
+        this.filePath = filePath;
     }
 
     /**
      * Creates a final batch marker indicating no more data remains.
      *
      * @param processedBytes total bytes processed
+     * @param filePath the file path for this batch
      * @return an empty, end-of-stream batch
      */
-    public static Batch end(long processedBytes) {
-        return new Batch(List.of(), List.of(), processedBytes, true);
+    public static Batch end(long processedBytes, Path filePath) {
+        return new Batch(List.of(), List.of(), processedBytes, true, filePath);
     }
 }

@@ -20,18 +20,21 @@ import org.utdteamthreefive.backend.models.Batch;
 import org.utdteamthreefive.backend.models.Batch.BigramDelta;
 import org.utdteamthreefive.backend.models.Batch.WordDelta;
 import org.utdteamthreefive.backend.util.DatabaseManager;
+import org.utdteamthreefive.ui.Table;
 
 public class DatabaseInserter implements Runnable {
     private static final Logger logger = Logger.getLogger(DatabaseInserter.class.getName());
+    private Table table;
     private final BlockingQueue<Batch> batchQueue;
     private Connection conn;
-    private Long fileId;
-    private final Path filePath;
-    private long wordsThisFile = 0L;
+    private final Map<Path, Long> fileIds = new HashMap<>();
+    private final Map<Path, Long> wordsPerFile = new HashMap<>();
+    private int batchesProcessed = 0;
+    private int endMarkersProcessed = 0;
 
-    public DatabaseInserter(Path filePath, BlockingQueue<Batch> queue) {
-        this.filePath = filePath;
+    public DatabaseInserter(BlockingQueue<Batch> queue, Table table) {
         this.batchQueue = queue;
+        this.table = table;
     }
 
     @Override
@@ -40,57 +43,77 @@ public class DatabaseInserter implements Runnable {
             conn = DatabaseManager.open();
             conn.setAutoCommit(false);
             conn.setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
-            
-            // Set lock wait timeout to fail fast on deadlocks
-            try (PreparedStatement stmt = conn.prepareStatement("SET SESSION innodb_lock_wait_timeout = 5")) {
-                stmt.execute();
-            } catch (SQLException e) {
-                logger.warning("Could not set lock wait timeout: " + e.getMessage());
-            }
 
-            // 1. Get file id from FILES table and create if not exists
-            fileId = ensureFileId();
-            if (fileId == null) {
-                logger.severe("❌ Could not create file record for " + filePath.toString());
-                return;
-            }
-
-            // 2. Consume batches from the queue and insert/update DB
-            logger.info("DatabaseInserter started for file: " + filePath.toString());
+            // Continuously consume batches from the queue and insert/update DB
+            logger.info("DatabaseInserter started and waiting for batches...");
             while(!Thread.currentThread().isInterrupted()) {
-                Batch batch = batchQueue.take();
-
-                // Process the batch with retry logic
-                boolean success = processBatchWithRetry(batch);
-                if (!success) {
-                    logger.severe("❌ Failed to process batch after all retries for file: " + filePath.toString());
-                    return;
-                }
-                
-                if (batch.end) {
-                    // Update file totals with retry logic
-                    if (updateFileTotalsWithRetry()) {
-                        logger.info("✅ DatabaseInserter received end marker, finishing for file: " + filePath.toString());
-                        return; // exit run method
-                    } else {
-                        logger.severe("❌ Failed to update file totals after all retries for file: " + filePath.toString());
-                        return;
+                try {
+                    Batch batch = batchQueue.take();
+                    
+                    // Skip batches with null file path
+                    if (batch.filePath == null && !batch.end) {
+                        logger.warning("Skipping batch with null file path");
+                        continue;
                     }
+                    
+                    // Initialize file processing if not already done (for both regular and end batches)
+                    if (batch.filePath != null && !fileIds.containsKey(batch.filePath)) {
+                        Long fileId = ensureFileId(batch.filePath);
+                        if (fileId == null) {
+                            logger.severe("❌ Could not create file record for " + batch.filePath.toString());
+                            continue; // Skip this batch but continue processing others
+                        }
+                        fileIds.put(batch.filePath, fileId);
+                        wordsPerFile.put(batch.filePath, 0L);
+                        logger.info("DatabaseInserter initialized for file: " + batch.filePath.toString());
+                    }
+                    
+                    // Handle regular batches
+                    if (batch.filePath != null && !batch.end) {
+                        batchesProcessed++;
+                        // Process the batch with retry logic
+                        boolean success = processBatchWithRetry(batch);
+                        if (!success) {
+                            logger.severe("❌ Failed to process batch after all retries for file: " + batch.filePath.toString());
+                            // will continue processing other files even if current file fails
+                        }
+                    }
+                    
+                    // Handle end markers
+                    if (batch.end && batch.filePath != null) {
+                        endMarkersProcessed++;
+                        logger.info("🏁 Processing end marker for file: " + batch.filePath.getFileName() + 
+                                   " (end marker " + endMarkersProcessed + " of " + fileIds.size() + " files)");
+                        // Update file totals with retry logic for this specific file
+                        if (updateFileTotalsWithRetry(batch.filePath)) {
+                            logger.info("✅ DatabaseInserter completed file: " + batch.filePath.toString() + 
+                                       " with " + wordsPerFile.get(batch.filePath) + " words");
+                        } else {
+                            logger.severe("❌ Failed to update file totals after all retries for file: " + batch.filePath.toString());
+                        }
+                        
+                        logger.info("DatabaseInserter progress: " + endMarkersProcessed + "/" + fileIds.size() + " files completed");
+
+                        // Finally update the TableView
+                        table.syncTableWithDatabase();
+                    }
+                } catch (InterruptedException e) {
+                    // Interrupted - time to shutdown
+                    Thread.currentThread().interrupt();
+                    logger.info("✅ DatabaseInserter was interrupted, shutting down...");
+                    break;
                 }
             }
 
         } catch (Exception e) {
-            logger.severe("❌ DatabaseInserter failed for " + filePath.toString() + ": " + e.getMessage());
+            logger.severe("❌ DatabaseInserter failed: " + e.getMessage());
             e.printStackTrace();
         } finally {
             // Cleanup resources
             if (conn != null) {
-                try {
-                    conn.close();
-                    logger.info("✅ DatabaseInserter completed for file: " + filePath.toString());
-                } catch (SQLException e) {
-                    logger.severe("Failed to close database connection: " + e.getMessage());
-                }
+                DatabaseManager.close(conn);
+                logger.info("✅ DatabaseInserter completed processing " + fileIds.size() + " files" +
+                          " (processed " + batchesProcessed + " batches, " + endMarkersProcessed + " end markers)");
             }
         }
     }
@@ -140,7 +163,7 @@ public class DatabaseInserter implements Runnable {
                 }
 
                 logger.severe("Fatal SQL error after " + MAX_RETRIES + " retries in " + 
-                             filePath.toString() + ": " + e.getMessage());
+                             (batch.filePath != null ? batch.filePath.toString() : "unknown file") + ": " + e.getMessage());
                 e.printStackTrace();
                 return false;
             } catch (Exception e) {
@@ -153,14 +176,14 @@ public class DatabaseInserter implements Runnable {
     }
     
     /**
-     * Update file totals with retry logic.
+     * Update file totals with retry logic for a specific file.
      */
-    private boolean updateFileTotalsWithRetry() {
+    private boolean updateFileTotalsWithRetry(Path filePath) {
         final int MAX_RETRIES = 3;
         
         for (int attempt = 0; attempt < MAX_RETRIES; attempt++) {
             try {
-                updateFileTotals();
+                updateFileTotals(filePath);
                 conn.commit(); // Final commit for file totals
                 return true;
                 
@@ -202,7 +225,7 @@ public class DatabaseInserter implements Runnable {
      /**
      * Ensure file record exists, or insert a new one.
      */
-    private Long ensureFileId() throws SQLException {
+    private Long ensureFileId(Path filePath) throws SQLException {
         String selectSql = "SELECT file_id FROM files WHERE file_path = ?";
         String insertSql = "INSERT INTO files (file_path, word_count, date_imported) VALUES (?, 0, CURDATE())";
 
@@ -280,7 +303,11 @@ public class DatabaseInserter implements Runnable {
                 stmt.executeBatch();
             }
         }
-        wordsThisFile += batchTotal;
+        
+        // Update word count for this specific file
+        if (batch.filePath != null) {
+            wordsPerFile.merge(batch.filePath, batchTotal, Long::sum);
+        }
     }
 
     private Map<String, Long> fetchWordIdsBulk(Connection conn, Set<String> tokens) throws SQLException {
@@ -383,17 +410,25 @@ public class DatabaseInserter implements Runnable {
     }
 
     /**
-     * After all batches are processed, compute total words for the file.
+     * After all batches are processed, compute total words for the specific file.
      */
-    private void updateFileTotals() throws SQLException {
+    private void updateFileTotals(Path filePath) throws SQLException {
+        Long fileId = fileIds.get(filePath);
+        Long wordCount = wordsPerFile.get(filePath);
+        
+        if (fileId == null || wordCount == null) {
+            logger.warning("Cannot update totals for file: " + filePath + " - missing data");
+            return;
+        }
+        
         String updateSql = "UPDATE files SET word_count = ? WHERE file_id = ?";
         try (PreparedStatement stmt = conn.prepareStatement(updateSql)) {
-            stmt.setLong(1, wordsThisFile);
+            stmt.setLong(1, wordCount);
             stmt.setLong(2, fileId);
             stmt.executeUpdate();
         }
 
-        logger.info("📊 Updated totals → Words (this file): " + wordsThisFile);
+        logger.info("📊 Updated totals for " + filePath.getFileName() + " → Words: " + wordCount);
     }
     //#endregion
 }

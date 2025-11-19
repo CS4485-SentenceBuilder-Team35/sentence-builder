@@ -15,5 +15,7 @@ module org.utdteamthreefive.ui {
     opens org.utdteamthreefive.ui to javafx.fxml;
 
     exports org.utdteamthreefive.backend.models;
+    exports org.utdteamthreefive.backend.models.enums;
+    exports org.utdteamthreefive.backend.models.interfaces;
     exports org.utdteamthreefive.ui;
 }

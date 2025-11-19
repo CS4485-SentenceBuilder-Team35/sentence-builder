@@ -71,6 +71,22 @@ public class Parser implements Runnable {
         try { sz = Files.size(path); } catch (Exception ignore) {}
         this.totalBytes = sz;
     }
+    /**
+     * Constructs a parser for a given text file and output queue with default flush parameters.
+     *
+     * @param path the path to the text file to be parsed
+     * @param queue the shared queue between producer and consumer used to store generated {@link Batch}
+     */
+    public Parser(Path path, BlockingQueue<Batch> queue, DoubleConsumer progressCallback) throws Exception {
+        this.path = path;
+        this.batchQueue = queue;
+        this.flushEveryTokens = 10000;
+        this.flushUniqueThreshold = 5000; 
+        this.progressCallback = progressCallback;
+        long sz = -1;
+        try { sz = Files.size(path); } catch (Exception ignore) {}
+        this.totalBytes = sz;
+    }
 
     /**
      * Each token is classified as a word.
@@ -146,15 +162,9 @@ public class Parser implements Runnable {
             e.printStackTrace();
         } finally {
             try {
-                // final, explicit flush
+                // final, explicit flush with end marker
                 flush(processed, true);
-            } catch (InterruptedException ignore) {
-                Thread.currentThread().interrupt();
-            }
-            try {
-                // exactly one END marker
-                batchQueue.put(Batch.end(processed));
-                logger.info("🧵 Parser queued END for " + path);
+                logger.info("🧵 Parser completed parsing for " + path);
             } catch (InterruptedException ignore) {
                 Thread.currentThread().interrupt();
             }
@@ -237,7 +247,7 @@ public class Parser implements Runnable {
             bigrams.add(new Batch.BigramDelta(key, count));
         }
 
-        batchQueue.put(new Batch(words, bigrams, processed, end));
+        batchQueue.put(new Batch(words, bigrams, processed, end, path));
         wordCounts.clear();
         bigramCounts.clear();
     }

@@ -22,11 +22,11 @@ public class Main extends Application {
 
     /**
      * Called automatically when the JavaFX application is shutting down.
-     * This is the perfect place to clean up resources like thread pools.
+     * This is the perfect place to clean up resources like the DatabaseInserter thread.
      */
     @Override
     public void stop() throws Exception {
-        System.out.println("Application shutting down - cleaning up thread pools...");
+        System.out.println("Application shutting down - cleaning up DatabaseInserter...");
         FileParseHandle.shutdown();
         super.stop();
     }

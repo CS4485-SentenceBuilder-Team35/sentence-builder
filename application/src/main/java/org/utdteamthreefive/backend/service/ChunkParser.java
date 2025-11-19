@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.function.DoubleConsumer;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
@@ -27,6 +28,8 @@ public class ChunkParser implements Runnable {
     private final Path chunkPath;
     private final BlockingQueue<Batch> batchQueue;
 
+    private final DoubleConsumer progressCallback;
+
     /**
      * Internal helper class for tracking counts and classification type
      * for individual tokens.
@@ -40,14 +43,14 @@ public class ChunkParser implements Runnable {
     private final Map<String, Counts> wordCounts = new HashMap<>();
     private final Map<Batch.BigramKey, Integer> bigramCounts = new HashMap<>();
 
-    public ChunkParser(Path chunkPath, BlockingQueue<Batch> batchQueue) {
+    public ChunkParser(Path chunkPath, BlockingQueue<Batch> batchQueue, DoubleConsumer progressCallback) {
         this.chunkPath = chunkPath;
         this.batchQueue = batchQueue;
+        this.progressCallback = progressCallback;
     }
 
     /**
-     * Similar to Parser but processes a whole chunk file at once
-     * rather than limiting to batches of set # of tokens
+     * Updated version of Parser that parses chunks (tokens) of a file
      * 
      * Each token is classifies as a word.
      * Word stats and bigram counter are tracked and periodically flushed
@@ -63,10 +66,19 @@ public class ChunkParser implements Runnable {
         boolean atSentenceStart = true;
 
         try (BufferedReader reader = Files.newBufferedReader(chunkPath, StandardCharsets.UTF_8)) {
+            // Get file size once at the beginning for progress calculation
+            final long fileSize = Files.size(chunkPath);
+            
             // Read each line from the chunk file
             String line;
             while ((line = reader.readLine()) != null) {
                 processed += line.getBytes(StandardCharsets.UTF_8).length + 2; // +2 for \r\n
+                
+                // Only update the progress every 8KB to reduce overhead on UI thread
+                if (processed % 8192 == 0 || processed >= fileSize) { // Every 8KB or at end
+                    final double progressValue = Math.min(1.0, (double) processed / fileSize);
+                    progressCallback.accept(progressValue);
+                }
 
                 String[] tokens = line.split("\\s+");
                 for (String rawToken : tokens) {
@@ -107,18 +119,19 @@ public class ChunkParser implements Runnable {
             // Flush after finishing the chunk
             flush(processed, false);
 
+            // Final progress update to ensure 100%
+            progressCallback.accept(1.0);
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             try {
+                // Send one final batch with any remaining data and mark it as the end
                 flush(processed, true);
                 logger.info("Completed chunk parsing for: " + chunkPath.toString());
             } catch (InterruptedException ignore) {
                 Thread.currentThread().interrupt();
             }
-
-            // Don't send individual end markers - the FileParseHandle will send one unified end marker
-            // after all chunk parsers finish
         }
     }
 
@@ -198,7 +211,7 @@ public class ChunkParser implements Runnable {
             bigrams.add(new Batch.BigramDelta(key, count));
         }
 
-        batchQueue.put(new Batch(words, bigrams, processed, end));
+        batchQueue.put(new Batch(words, bigrams, processed, end, chunkPath));
         wordCounts.clear();
         bigramCounts.clear();
     }

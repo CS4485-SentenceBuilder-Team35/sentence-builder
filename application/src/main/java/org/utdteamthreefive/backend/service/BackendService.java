@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 import org.utdteamthreefive.backend.models.Batch;
 import org.utdteamthreefive.backend.util.DatabaseManager;
 import org.utdteamthreefive.ui.FileTab;
+import org.utdteamthreefive.ui.Table;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -60,23 +61,7 @@ public class BackendService {
     }
 
     /**
-     * Starts a ChunkParser thread to process the given chunk file.  
-     * This is the PRODUCER in the PRODUCER-CONSUMER pattern.
-     * @param chunkPath
-     * @param batchQueue
-     * @param chunkIndex for unique thread naming
-     * @return
-     * @author Rommel Isaac Baldivas
-     */
-    public static Thread processChunk(Path chunkPath, BlockingQueue<Batch> batchQueue, int chunkIndex) {
-        ChunkParser chunkParser = new ChunkParser(chunkPath, batchQueue);
-        Thread chunkParserThread = new Thread(chunkParser, "chunk-parser-" + chunkIndex + "-" + chunkPath.getFileName());
-        chunkParserThread.start();
-        return chunkParserThread;
-    }
-
-    /**
-     * Will start a single DBInserter thread for a file to consume from the shared
+     * Will start a single DBInserter thread to consume from the shared
      * batch queue.  
      * This is the CONSUMER in the PRODUCER-CONSUMER pattern.
      * @param filePath the path of the file being processed
@@ -84,9 +69,9 @@ public class BackendService {
      * @return the database inserter thread
      * @author Rommel Isaac Baldivas
      */
-    public static Thread startDBInserter(Path filePath, BlockingQueue<Batch> batchQueue) {
-        DatabaseInserter dbInserter = new DatabaseInserter(filePath, batchQueue);
-        Thread dbInserterThread = new Thread(dbInserter, "db-inserter-" + filePath.getFileName());
+    public static Thread startDBInserter(BlockingQueue<Batch> batchQueue, Table table) {
+        DatabaseInserter dbInserter = new DatabaseInserter(batchQueue, table);
+        Thread dbInserterThread = new Thread(dbInserter, "db-inserter");
         dbInserterThread.start();
         return dbInserterThread;
     }

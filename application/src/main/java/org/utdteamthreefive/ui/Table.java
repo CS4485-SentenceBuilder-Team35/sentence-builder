@@ -17,6 +17,7 @@ import org.utdteamthreefive.backend.util.DatabaseManager;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -29,6 +30,7 @@ import javafx.util.converter.IntegerStringConverter;
  */
 public class Table {
     TableView<Word> table; // The TableView UI component
+    Label tableStatusLabel; // Label to show status of the table
     private ObservableList<Word> data = FXCollections.observableArrayList(); // Holds Word objects for the TableView
     private Connection conn; // DB connection
     private static final Logger logger = Logger.getLogger(Table.class.getName());
@@ -41,6 +43,10 @@ public class Table {
         table.getColumns().setAll(setupColumns());
         table.setEditable(true);
         table.setMinWidth(TableView.USE_COMPUTED_SIZE);
+        tableStatusLabel = new Label("Table loaded");
+        tableStatusLabel.setMinWidth(TableView.USE_COMPUTED_SIZE);
+        tableStatusLabel.setMaxWidth(Double.MAX_VALUE);
+        tableStatusLabel.setAlignment(javafx.geometry.Pos.CENTER);
 
         // Allow table to expand when columns are resized
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
@@ -141,5 +147,9 @@ public class Table {
 
     public TableView<Word> getTableView() {
         return table;
+    }
+
+    public Label getTableStatusLabel() {
+        return tableStatusLabel;
     }
 }

@@ -23,7 +23,8 @@ import org.utdteamthreefive.backend.service.BackendService;
 import org.utdteamthreefive.ui.FileTab;
 
 /**
- * @author Aiden Martinez
+ * Utility class to handle parsing multiple files in the background
+ * @author Aiden Martinez and Rommel Isaac Baldivas
  */
 public class FileParseHandle {
     private static final Logger logger = Logger.getLogger(FileParseHandle.class.getName());
@@ -39,7 +40,7 @@ public class FileParseHandle {
      */
     @SuppressWarnings("resource") // Executor is properly shutdown in background thread
     public static void ParseFiles(List<File> files, Table table, HashMap<File, FileTab> fileTabMap) {
-        // // Start DatabaseInserter only if not already running
+        // Start DatabaseInserter only if not already running
         if (dbInserterThread == null || !dbInserterThread.isAlive()) {
             dbInserterThread = BackendService.startDBInserter(batchQueue, table);
             logger.info("Started new DatabaseInserter thread: " + dbInserterThread.getName());
@@ -66,6 +67,11 @@ public class FileParseHandle {
                     }
                 }
         );
+
+        // Set TableView status
+        Platform.runLater(() -> {
+            table.getTableStatusLabel().setText("Files are being processed...");
+        });
 
         // For each file, submit a task to the executor
         for (File file : files) {
@@ -131,6 +137,9 @@ public class FileParseHandle {
                             logger.info("Queue is empty and stable for " + (stableCount * checkInterval / 1000) + " seconds. DatabaseInserter processing completed.");
                             // Stop the DatabaseInserter thread
                             dbInserterThread.interrupt();   
+                            Platform.runLater(() -> {
+                                table.getTableStatusLabel().setText("All files have been processed.");
+                            });
                             break;
                         }
                         if (currentQueueSize > 0 && stableCount >= requiredStableChecks * 3) {

@@ -176,6 +176,7 @@ public class MainController implements Initializable {
                 return;
             }
 
+            flowPane.getChildren().add(table.getTableStatusLabel());
             flowPane.getChildren().add(table.getTableView());
             FlowPane.setMargin(table.getTableView(), new Insets(16.0, 0, 16.0, 0));
 

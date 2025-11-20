@@ -56,7 +56,7 @@
                             <Insets bottom="20.0" left="20.0" right="20.0" top="5.0" />
                         </padding>
                         <children>
-                            <FlowPane alignment="TOP_CENTER" prefHeight="1000.0" prefWidth="1400.0"
+                            <FlowPane alignment="TOP_CENTER" orientation="VERTICAL" prefHeight="1000.0" prefWidth="1400.0"
                                 styleClass="table-flow-pane" />
                         </children>
                     </VBox>

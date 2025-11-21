@@ -7,7 +7,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 import org.utdteamthreefive.backend.models.Batch;
-import org.utdteamthreefive.backend.service.ChunkParser;
+import org.utdteamthreefive.backend.service.BackendService;
+import org.utdteamthreefive.backend.service.Parser;
 import org.utdteamthreefive.ui.FileTab;
 
 import javafx.application.Platform;
@@ -37,11 +38,15 @@ public class FileParseTask extends Task<Void> {
 
     @Override
     protected Void call() throws Exception {
-        ChunkParser chunkParser = new ChunkParser(file.toPath(), chunkQueue, progress -> {
+        // ChunkParser chunkParser = new ChunkParser(file.toPath(), chunkQueue, progress -> {
+        //     // Ensure progress updates happen on JavaFX Application Thread
+        //     Platform.runLater(() -> updateProgress(progress, 1.0));
+        // });
+        // chunkParser.run();
+        BackendService.processFile(file.toPath(), chunkQueue, progress -> {
             // Ensure progress updates happen on JavaFX Application Thread
             Platform.runLater(() -> updateProgress(progress, 1.0));
         });
-        chunkParser.run();
 
         return null;
     }

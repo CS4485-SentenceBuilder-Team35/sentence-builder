@@ -4,6 +4,7 @@ import java.nio.file.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.util.concurrent.*;
+import java.util.function.DoubleConsumer;
 import java.util.logging.Logger;
 
 import org.utdteamthreefive.backend.models.Batch;
@@ -17,9 +18,9 @@ import javafx.collections.ObservableList;
 import javafx.scene.Node;
 
 public class BackendService {
-    
+
     private static final Logger logger = Logger.getLogger(BackendService.class.getName());
-    
+
     /**
      * PRODUCER - CONSUMER pattern with a BlockingQueue between Parser and
      * DBInserter.
@@ -35,36 +36,43 @@ public class BackendService {
      * 
      * @author Zaeem Rashid
      */
-    public static void processFile(String filePath, FileTab fileTab) {
+    public static void processFile(Path filePath, LinkedBlockingQueue<Batch> batchQueue, DoubleConsumer progressCallback) {
 
         logger.info("✅ Starting processing for file: " + filePath);
 
+        // try {
+        //     Path path = Paths.get(filePath);
+        //     BlockingQueue<Batch> queue = new ArrayBlockingQueue<>(64); // bounded = back-pressure
+
+        //     Parser parser = new Parser(path, queue, 10_000, 5_000, progress -> Platform.runLater(() -> logger.info("Parser progress: " + progress)));
+        //     DBInserter dbWriter = new DBInserter(path, queue);
+
+        //     Thread parserThread = new Thread(parser, "parser-producer");
+        //     Thread writerThread = new Thread(dbWriter, "db-consumer");
+
+        //     writerThread.start();
+        //     parserThread.start();
+
+        //     parserThread.join();
+        //     writerThread.join();
+
+        // } catch (Exception e) {
+        //     e.printStackTrace();
+        // }
         try {
-            Path path = Paths.get(filePath);
-            BlockingQueue<Batch> queue = new ArrayBlockingQueue<>(64); // bounded = back-pressure
-
-            Parser parser = new Parser(path, queue, 10_000, 5_000, progress -> Platform.runLater(() -> logger.info("Parser progress: " + progress)));
-            DBInserter dbWriter = new DBInserter(path, queue);
-
-            Thread parserThread = new Thread(parser, "parser-producer");
-            Thread writerThread = new Thread(dbWriter, "db-consumer");
-
-            writerThread.start();
-            parserThread.start();
-
-            parserThread.join();
-            writerThread.join();
-
+            Parser parser = new Parser(filePath, batchQueue, progressCallback);
+            parser.run();
         } catch (Exception e) {
-            e.printStackTrace();
+            // TODO: handle exception
         }
     }
 
     /**
      * Will start a single DBInserter thread to consume from the shared
-     * batch queue.  
+     * batch queue.
      * This is the CONSUMER in the PRODUCER-CONSUMER pattern.
-     * @param filePath the path of the file being processed
+     * 
+     * @param filePath   the path of the file being processed
      * @param batchQueue the queue to consume batches from
      * @return the database inserter thread
      * @author Rommel Isaac Baldivas
@@ -78,6 +86,7 @@ public class BackendService {
 
     /**
      * Fetches the list of files previously processed and stored in the database.
+     * 
      * @return An observable list of Nodes representing the file tabs for each stored file.
      * @author Rommel Isaac Baldivas
      */

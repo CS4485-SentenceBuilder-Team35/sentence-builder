@@ -26,18 +26,15 @@ import org.utdteamthreefive.backend.models.Batch;
  * @author Zaeem Rashid
  */
 public class Parser implements Runnable {
-
     private static final Logger logger = Logger.getLogger(Parser.class.getName());
-
-    private static final Pattern WORD_WITH_PUNCTUATION = Pattern.compile("\\w+[,.!?]?[\"')\\]]*");
-    private static final Pattern ENDS_SENT = Pattern.compile(".*[.!?][\"')\\]]*$");
+    private static final Pattern WORD_WITH_PUNCTUATION_PATTERN = Pattern.compile("\\p{L}+[,.!?]?[\"')\\]]*", Pattern.UNICODE_CHARACTER_CLASS);
+    private static final Pattern NUMBER_PATTERN = Pattern.compile("\\d+");
+    private static final Pattern END_OF_SENTENCE_PATTERN = Pattern.compile(".*[.!?][\"')\\]]*$");
 
     private final Path path;
     private final BlockingQueue<Batch> batchQueue;
-    private final int flushEveryTokens;
-    private final int flushUniqueThreshold;
+
     private final DoubleConsumer progressCallback;
-    private final long totalBytes;
     
     /**
      * Internal helper class for tracking counts and classification type
@@ -61,31 +58,10 @@ public class Parser implements Runnable {
      * @param flushEveryTokens the maximum number of tokens to process before flushing a batch
      * @param flushUniqueThreshold the maximum number of unique tokens or bigrams before flushing
      */
-    public Parser(Path path, BlockingQueue<Batch> queue, int flushEveryTokens, int flushUniqueThreshold, DoubleConsumer progressCallback) throws Exception {
-        this.path = path;
-        this.batchQueue = queue;
-        this.flushEveryTokens = flushEveryTokens;
-        this.flushUniqueThreshold = flushUniqueThreshold;
-        this.progressCallback = progressCallback;
-        long sz = -1;
-        try { sz = Files.size(path); } catch (Exception ignore) {}
-        this.totalBytes = sz;
-    }
-    /**
-     * Constructs a parser for a given text file and output queue with default flush parameters.
-     *
-     * @param path the path to the text file to be parsed
-     * @param queue the shared queue between producer and consumer used to store generated {@link Batch}
-     */
     public Parser(Path path, BlockingQueue<Batch> queue, DoubleConsumer progressCallback) throws Exception {
         this.path = path;
         this.batchQueue = queue;
-        this.flushEveryTokens = 10000;
-        this.flushUniqueThreshold = 5000; 
         this.progressCallback = progressCallback;
-        long sz = -1;
-        try { sz = Files.size(path); } catch (Exception ignore) {}
-        this.totalBytes = sz;
     }
 
     /**
@@ -95,76 +71,80 @@ public class Parser implements Runnable {
      */
     @Override
     public void run() {
-        logger.info("📝 Parsing Text File: " + path);
+        logger.info("Starting chunk parsing for: " + path.toString());
 
-        long processed = 0L, seenTokens = 0L;
-        String prevWord = null, lastWord = null;
+        long processed = 0L;
+        String prevWord = null;
         boolean atSentenceStart = true;
 
         try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+            // Get file size once at the beginning for progress calculation
+            final long fileSize = Files.size(path);
+
+            // Read each line from the chunk file
             String line;
             while ((line = reader.readLine()) != null) {
-                processed += line.getBytes(StandardCharsets.UTF_8).length + 1;
-                
-                if (progressCallback != null && totalBytes > 0) {
-                    double progress = Math.min(1.0, (double) processed / totalBytes);
-                    progressCallback.accept(progress);
+                processed += line.getBytes(StandardCharsets.UTF_8).length + 2; // +2 for \r\n
+
+                // Only update the progress every 8KB to reduce overhead on UI thread
+                if (processed % 8192 == 0 || processed >= fileSize) { // Every 8KB or at end
+                    final double progressValue = Math.min(1.0, (double) processed / fileSize);
+                    progressCallback.accept(progressValue);
                 }
 
                 String[] tokens = line.split("\\s+");
                 for (String rawToken : tokens) {
-                    if (rawToken.isEmpty())
+                    if (rawToken.isEmpty()) 
+                        continue;
+
+                    if (NUMBER_PATTERN.matcher(rawToken).matches()) 
                         continue;
 
                     // Preserve raw token for sentence-end detection, then normalize
-                    boolean endsSentence = ENDS_SENT.matcher(rawToken).matches();
+                    boolean isEndOfSentence = END_OF_SENTENCE_PATTERN.matcher(rawToken).matches();
                     String token = normalizeToken(rawToken);
                     if (token == null || token.isEmpty()) {
-                        // nothing meaningful after stripping punctuation
-                        if (endsSentence) {
+                        if (isEndOfSentence) {
                             prevWord = null;
-                            lastWord = null;
                             atSentenceStart = true;
                         }
                         continue;
                     }
 
                     String type = classifyType(token);
-                    if ("alpha".equals(type)) {
-                        seenTokens++;
+                    if (type.equals("alpha")) {
                         // add end count if token ends the sentence, add begin count if at sentence start
-                        recordToken(token, type, 1, atSentenceStart ? 1 : 0, endsSentence ? 1 : 0);
-                        if (prevWord != null)
+                        recordToken(token, type, 1, atSentenceStart ? 1 : 0, isEndOfSentence ? 1 : 0);
+
+                        // Add bigram if previous word exists
+                        if (prevWord != null) {
                             bigramCounts.merge(new Batch.BigramKey(prevWord, token), 1, Integer::sum);
+                        }
+
                         prevWord = token;
-                        lastWord = token;
                         atSentenceStart = false;
                     }
 
-                    if (endsSentence) {
+                    if (isEndOfSentence) {
                         prevWord = null;
-                        lastWord = null;
                         atSentenceStart = true;
-                    }
-                
-                    // Flush when:
-                    // - processed tokens reach the flush interval
-                    // - OR unique word count exceeds threshold
-                    // - OR unique bigram count exceeds threshold
-                    if ((seenTokens > 0 && seenTokens % flushEveryTokens == 0)
-                            || wordCounts.size() >= flushUniqueThreshold
-                            || bigramCounts.size() >= flushUniqueThreshold) {
-                        flush(processed, false);
                     }
                 }
             }
+
+            // Flush after finishing the chunk
+            flush(processed, false);
+
+            // Final progress update to ensure 100%
+            progressCallback.accept(1.0);
+
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
             try {
-                // final, explicit flush with end marker
+                // Send one final batch with any remaining data and mark it as the end
                 flush(processed, true);
-                logger.info("🧵 Parser completed parsing for " + path);
+                logger.info("Completed chunk parsing for: " + path.toString());
             } catch (InterruptedException ignore) {
                 Thread.currentThread().interrupt();
             }
@@ -179,7 +159,7 @@ public class Parser implements Runnable {
      * @return a string label representing the token type
      */
     private static String classifyType(String token) {
-        if (WORD_WITH_PUNCTUATION.matcher(token).matches())
+        if (WORD_WITH_PUNCTUATION_PATTERN.matcher(token).matches())
             return "alpha";
         return "misc";
     }

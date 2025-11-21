@@ -78,7 +78,7 @@ public class BackendService {
      * @author Rommel Isaac Baldivas
      */
     public static Thread startDBInserter(BlockingQueue<Batch> batchQueue, Table table) {
-        DatabaseInserter dbInserter = new DatabaseInserter(batchQueue, table);
+        DBInserter dbInserter = new DBInserter(batchQueue, table);
         Thread dbInserterThread = new Thread(dbInserter, "db-inserter");
         dbInserterThread.start();
         return dbInserterThread;

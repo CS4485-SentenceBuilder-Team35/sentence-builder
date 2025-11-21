@@ -241,7 +241,7 @@ public class DBReader {
         return -1;
     }
 
-/*
+/**
  *  Retrieves all words from the database for use in random sentence generation.
  *  @author Aisha Qureshi
  *  @author Zaeem Rashid
@@ -278,7 +278,6 @@ public class DBReader {
      * Given a word as text, returns all words that follow along with their frequencies.
      * Returns an ArrayList of word tokens in descending order of frequency.
      * This is used by the weighted random algorithm.
-     *
      * @author Aisha Qureshi
      */
     public ArrayList<String> SearchWordFollowsWithFrequency(String word_token) {

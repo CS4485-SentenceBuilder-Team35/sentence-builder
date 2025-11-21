@@ -117,7 +117,7 @@ public class DBInserter implements Runnable {
             }
 
         } catch (Exception e) {
-            logger.severe("❌ DatabaseInserter failed: " + e.getMessage());
+            logger.severe("DatabaseInserter failed: " + e.getMessage());
             e.printStackTrace();
         } finally {
             // Cleanup resources

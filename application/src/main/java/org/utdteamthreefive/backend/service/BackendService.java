@@ -34,11 +34,11 @@ public class BackendService {
      * 
      * CONSUMER: DBInserter takes these batches and writes them to the database.
      * 
-     * @author Zaeem Rashid
+     * @author Zaeem Rashid and Aisha Qureshi
      */
     public static void processFile(Path filePath, LinkedBlockingQueue<Batch> batchQueue, DoubleConsumer progressCallback) {
 
-        logger.info("✅ Starting processing for file: " + filePath);
+        logger.info("Starting processing for file: " + filePath);
 
         // try {
         //     Path path = Paths.get(filePath);

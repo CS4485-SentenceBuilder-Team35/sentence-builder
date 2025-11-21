@@ -9,12 +9,13 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 // /**
+//  * Deprecated.
 //  * Temporary test runner to validate backend DB integration without UI.
 //  *  @Author Aisha Qureshi
 //  */
 // public class TestRun {
 //     public static void main(String[] args) throws Exception {
-//         System.out.println("🚀 Starting backend parser + inserter test...");
+//         System.out.println(" Starting backend parser + inserter test...");
 
 //         Path path = Path.of("src/main/resources/test_input.txt"); // your input file
 //         BlockingQueue<Batch> queue = new ArrayBlockingQueue<>(5);

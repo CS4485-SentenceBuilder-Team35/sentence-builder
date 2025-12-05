@@ -11,6 +11,8 @@ module org.utdteamthreefive.ui {
     requires com.fasterxml.jackson.databind;
     requires com.fasterxml.jackson.core;
     requires com.fasterxml.jackson.annotation;
+    requires nd4j.common;
+    requires nd4j.api;
 
     opens org.utdteamthreefive.ui to javafx.fxml;
 

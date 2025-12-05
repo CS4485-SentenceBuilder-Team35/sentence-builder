@@ -23,7 +23,7 @@ import org.utdteamthreefive.backend.models.Batch;
  * This class implements {@link Runnable} so it can be executed on a separate thread
  * to enable concurrent file parsing.
  *
- * @author Zaeem Rashid
+ * @author Zaeem Rashid and Rommel Isaac Baldivas
  */
 public class Parser implements Runnable {
     private static final Logger logger = Logger.getLogger(Parser.class.getName());
@@ -40,6 +40,7 @@ public class Parser implements Runnable {
      * Internal helper class for tracking counts and classification type
      * for individual tokens.
      * Keeping stats together for each word.
+     * @author Zaeem Rashid
      */
     private static final class Counts {
         int total, begin, end;
@@ -57,6 +58,7 @@ public class Parser implements Runnable {
      * @param queue the shared queue between producer and consumer used to store generated {@link Batch}
      * @param flushEveryTokens the maximum number of tokens to process before flushing a batch
      * @param flushUniqueThreshold the maximum number of unique tokens or bigrams before flushing
+     * @author Zaeem Rashid
      */
     public Parser(Path path, BlockingQueue<Batch> queue, DoubleConsumer progressCallback) throws Exception {
         this.path = path;
@@ -68,6 +70,7 @@ public class Parser implements Runnable {
      * Each token is classified as a word.
      * Word stats and bigram counter are tracked and periodically flushed
      * into {@link Batch} for consumer to process.
+     * @author Zaeem Rashid and Rommel Isaac Baldivas
      */
     @Override
     public void run() {
@@ -208,6 +211,7 @@ public class Parser implements Runnable {
      * @param processed the number of bytes processed so far
      * @param end whether this is the final batch
      * @throws InterruptedException if the queue operation is interrupted
+     * @author Zaeem Rashid and Rommel Isaac Baldivas
      */
     private void flush(long processed, boolean end) throws InterruptedException {
         if (wordCounts.isEmpty() && bigramCounts.isEmpty() && !end) return;

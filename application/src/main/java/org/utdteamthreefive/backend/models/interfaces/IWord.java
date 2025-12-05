@@ -1,4 +1,5 @@
 /**
+ * An interface for methods for the Word model.
  * @author Rommel Isaac Baldivas
  */
 

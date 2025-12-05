@@ -47,6 +47,9 @@ public class DBInserter implements Runnable {
     }
 
     /**
+     * Overriding run method that automatically starts when Thread is started.
+     * The thread will continuously consume batches from the queue to insert/update word and file
+     * in the database
      * @author Aisha Qureshi and Rommel Isaac Baldivas
      */
     @Override
@@ -206,6 +209,7 @@ public class DBInserter implements Runnable {
                     logger.severe("Failed to rollback file totals transaction: " + rollbackEx.getMessage());
                 }
 
+                // 
                 if (isTransient(e) && attempt < MAX_RETRIES - 1) {
                     long sleep = backoff(attempt);
                     logger.warning("Retrying file totals update in " + sleep + "ms: " + e.getMessage());
@@ -226,7 +230,7 @@ public class DBInserter implements Runnable {
     }
     
     /**
-     * 
+     * Check when a deadlock or transient error occurs.
      * @param e
      * @return
      * @author Zaeem Rashid
@@ -247,6 +251,7 @@ public class DBInserter implements Runnable {
     }
     /**
      * Ensure file record exists, or insert a new one.
+     * @author Aisha Qureshi and Rommel Isaac Baldivas
      */
     private Long ensureFileId(Path filePath) throws SQLException {
         String selectSql = "SELECT file_id FROM files WHERE file_path = ?";
@@ -273,6 +278,7 @@ public class DBInserter implements Runnable {
 
     /**
      * Insert or update global WORD table.
+     * @author Aisha Qureshi and Rommel Isaac Baldivas
      */
     private void insertOrUpdateWords(Batch batch) throws SQLException {
         if (batch.wordDeltas.isEmpty()) return;
@@ -333,18 +339,24 @@ public class DBInserter implements Runnable {
         }
     }
     
+    /**
+     * Needed to fetch word IDs in bulk for bigram insertion for better performance
+     * instead of querying one-by-one
+     * @author Rommel Isaac Baldivas
+     */
     private Map<String, Long> fetchWordIdsBulk(Connection conn, Set<String> tokens) throws SQLException {
         Map<String, Long> out = new HashMap<>(tokens.size() * 2);
         if (tokens.isEmpty()) return out;
         
-        // MySQL IN list practical chunking (avoid huge packets)
+        // This is used to chunk large IN clauses
         final int CHUNK = 1000;
         List<String> list = new ArrayList<>(tokens);
         for (int i = 0; i < list.size(); i += CHUNK) {
             int end = Math.min(i + CHUNK, list.size());
-            List<String> sub = list.subList(i, end);
+            List<String> sub = list.subList(i, end); // list of tokens in this chunk
             
             String placeholders = String.join(",", Collections.nCopies(sub.size(), "?"));
+            // get word_id for any token within this chunk
             String sql = "SELECT word_id, word_token FROM word WHERE word_token IN (" + placeholders + ")";
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 int idx = 1;
@@ -437,7 +449,7 @@ public class DBInserter implements Runnable {
     
     /**
      * After all batches are processed, compute total words for the specific file.
-     * @author Aisha Qureshi and Rommel Isaac Baldivas
+     * @author Aisha Qureshi
     */
    private void updateFileTotals(Path filePath) throws SQLException {
        Long fileId = fileIds.get(filePath);

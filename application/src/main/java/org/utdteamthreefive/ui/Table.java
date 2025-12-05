@@ -1,7 +1,3 @@
-/**
- * @author Rommel Isaac Baldivas
- */
-
 package org.utdteamthreefive.ui;
 
 import java.sql.Connection;
@@ -27,6 +23,7 @@ import javafx.util.converter.IntegerStringConverter;
 /**
  * This is a class that will initialize a TableView and
  * populate it with the WORD table from the database
+ * @author Rommel Isaac Baldivas
  */
 public class Table {
     TableView<Word> table; // The TableView UI component

@@ -38,11 +38,6 @@ public class FileParseTask extends Task<Void> {
 
     @Override
     protected Void call() throws Exception {
-        // ChunkParser chunkParser = new ChunkParser(file.toPath(), chunkQueue, progress -> {
-        //     // Ensure progress updates happen on JavaFX Application Thread
-        //     Platform.runLater(() -> updateProgress(progress, 1.0));
-        // });
-        // chunkParser.run();
         BackendService.processFile(file.toPath(), chunkQueue, progress -> {
             // Ensure progress updates happen on JavaFX Application Thread
             Platform.runLater(() -> updateProgress(progress, 1.0));
@@ -54,6 +49,7 @@ public class FileParseTask extends Task<Void> {
     /**
      * Done is called automatically when the call method is finished, so
      * we can do cleanup work and update the UI here
+     * @authoor Rommel Isaac Baldivas and Aiden Martinez
      */
     @Override
     protected void done() {

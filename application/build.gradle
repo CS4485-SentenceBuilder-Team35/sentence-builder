@@ -51,6 +51,8 @@ dependencies {
     implementation("com.openai:openai-java:4.8.0")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.25")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
+    implementation "org.deeplearning4j:deeplearning4j-core:1.0.0-M2.1"
+    implementation "org.nd4j:nd4j-native-platform:1.0.0-M2.1"
 }
 
 test {

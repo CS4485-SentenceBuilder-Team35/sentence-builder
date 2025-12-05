@@ -2,7 +2,6 @@ package org.utdteamthreefive.ui;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.scene.Node;
@@ -16,16 +15,11 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.layout.HBox;
 import javafx.scene.control.TabPane;
-import javafx.scene.control.TextField;
-import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.utdteamthreefive.backend.util.FileParseHandle;
-import org.utdteamthreefive.backend.SampleClass;
 import org.utdteamthreefive.backend.service.BackendService;
-import org.utdteamthreefive.backend.service.SentenceGenerator;
-
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
@@ -55,6 +49,7 @@ public class MainController implements Initializable {
     private Button uploadFilesButton; // fx:id="uploadFilesButton" in FXML
 
     /**
+     * Handler for clicking to the Table tab/view
      * @author Rommel Isaac Baldivas
      * @param event
      */
@@ -81,10 +76,14 @@ public class MainController implements Initializable {
         }
     }
 
+    /**
+     * Handler for clicking to the Upload tab/view
+     * @author Aiden Martinez
+     * @param event
+     * @deprecated This was used to open the upload-view.fxml when working separately
+     */
     @FXML
     protected void onSwitchToUploadClick(ActionEvent event) {
-        SampleClass sampleClass = new SampleClass();
-
         try
         {
             Parent root = FXMLLoader.load(getClass().getResource("upload-view.fxml"));
@@ -97,6 +96,11 @@ public class MainController implements Initializable {
         }
     }
 
+    /**
+     * Click event is called when the user selects files to upload
+     * @author Aiden Martinez and Rommel Isaac Baldivas
+     * @param event
+     */
     @FXML
     protected void onSelectFilesButtonClick(ActionEvent event) {
         FileChooser fileChooser = new FileChooser();

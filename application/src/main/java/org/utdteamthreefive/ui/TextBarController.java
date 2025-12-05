@@ -12,6 +12,9 @@ import java.util.logging.Logger;
 
 import org.utdteamthreefive.backend.service.SentenceGenerator;
 
+/**
+ * @author Justin Yao
+ */
 public class TextBarController {
     private final Logger logger = Logger.getLogger(TextBarController.class.getName());
 

@@ -58,6 +58,7 @@ public final class Batch {
      * @param b list of bigram deltas
      * @param processedBytes number of bytes processed so far
      * @param end indicates if this is the final batch
+     * @author Zaeem Rashid
      */
     public Batch(List<WordDelta> w, List<BigramDelta> b, long processedBytes, boolean end, Path filePath) {
         this.wordDeltas = w;

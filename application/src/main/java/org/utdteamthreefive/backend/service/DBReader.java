@@ -29,6 +29,7 @@ public class DBReader {
 
     /**
      *  Given a word as text, returns the ID of a word (or -1 if not found)
+     * @author Aiden Martinez
      */
     public int SearchWordID(String word_token)
     {
@@ -75,6 +76,7 @@ public class DBReader {
 
     /**
      *  Given a word as text, returns all words that follow in descending order
+     * @author Aiden Martinez
      */
     public ArrayList<String> SearchWordFollows(String word_token, boolean desc_order)
     {
@@ -148,6 +150,7 @@ public class DBReader {
 
     /**
      *  Query database for the max number of times any word ends a sentence
+     * @author Aiden Martinez
      */
     public int GetMaxEndOccurrences()
     {
@@ -194,6 +197,10 @@ public class DBReader {
         return -1;
     }
 
+    /**
+     *  @returns The occurrence of the word that has the most end occurrences
+     * @author Aiden Martinez
+     */
     public int GetNumEndOccurrences(String word)
     {
         //Open connection

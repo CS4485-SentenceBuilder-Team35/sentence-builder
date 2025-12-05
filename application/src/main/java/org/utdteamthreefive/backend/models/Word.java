@@ -1,6 +1,3 @@
-/**
- * @author Rommel Isaac Baldivas
- */
 
 package org.utdteamthreefive.backend.models;
 
@@ -12,6 +9,10 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
+/**
+ * A model to represent a word which has the columns from the Words table.
+ * @author Rommel Isaac Baldivas
+ */
 public class Word implements IWord {
     private IntegerProperty wordID;
     private StringProperty wordToken;

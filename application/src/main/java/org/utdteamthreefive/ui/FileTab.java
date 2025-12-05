@@ -8,6 +8,10 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
 
+/**
+ * This is the class/component that contains the file name label and progress bar
+ * @author Justin Yao and Rommel Isaac Baldivas
+ */
 public class FileTab extends HBox {
 
     private final Label fileNameLabel;
@@ -62,7 +66,6 @@ public class FileTab extends HBox {
     
     public void doneStyle() {
         progressBar.setStyle("-fx-accent: #4CAF50;"); // green when complete
-        // progressBar.setProgress(1.0);
     }
 
     public void errorStyle() {

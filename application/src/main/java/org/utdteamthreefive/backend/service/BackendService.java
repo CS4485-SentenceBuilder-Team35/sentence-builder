@@ -39,26 +39,6 @@ public class BackendService {
     public static void processFile(Path filePath, LinkedBlockingQueue<Batch> batchQueue, DoubleConsumer progressCallback) {
 
         logger.info("Starting processing for file: " + filePath);
-
-        // try {
-        //     Path path = Paths.get(filePath);
-        //     BlockingQueue<Batch> queue = new ArrayBlockingQueue<>(64); // bounded = back-pressure
-
-        //     Parser parser = new Parser(path, queue, 10_000, 5_000, progress -> Platform.runLater(() -> logger.info("Parser progress: " + progress)));
-        //     DBInserter dbWriter = new DBInserter(path, queue);
-
-        //     Thread parserThread = new Thread(parser, "parser-producer");
-        //     Thread writerThread = new Thread(dbWriter, "db-consumer");
-
-        //     writerThread.start();
-        //     parserThread.start();
-
-        //     parserThread.join();
-        //     writerThread.join();
-
-        // } catch (Exception e) {
-        //     e.printStackTrace();
-        // }
         try {
             Parser parser = new Parser(filePath, batchQueue, progressCallback);
             parser.run();

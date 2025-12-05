@@ -14,18 +14,18 @@
 
    <children>
       <!-- Output -->
-      <Label fx:id="sentenceField" alignment="CENTER" prefWidth="350.0"
+      <Label fx:id="sentenceField" alignment="CENTER" prefWidth="1024.0"
          text="Generated sentence will appear here..." textAlignment="CENTER"
-         style="-fx-font-size: 14px;">
+         style="-fx-font-size: 24px;">
          <VBox.margin>
             <Insets bottom="32.0" left="32.0" right="32.0" top="32.0" />
          </VBox.margin></Label>
 
       <!-- Text input field -->
-      <TextField fx:id="inputField" prefWidth="350" promptText="Type a word..." style="-fx-font-size: 14px;" />
-      <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
+      <TextField fx:id="inputField" prefWidth="350" promptText="Type a word..." style="-fx-font-size: 24px;" />
+      <HBox alignment="CENTER" prefHeight="100.0" prefWidth="250.0">
          <children>
-            <ChoiceBox fx:id="algoChoice" prefWidth="150.0" styleClass="algo-choicebox">
+            <ChoiceBox fx:id="algoChoice" prefWidth="300.0" style="-fx-font-size: 24px;" styleClass="algo-choicebox">
                <opaqueInsets>
                   <Insets />
                </opaqueInsets>
@@ -35,7 +35,7 @@
             </ChoiceBox>
 
             <!-- Generate button BELOW the text bar -->
-            <Button fx:id="generateButton" onAction="#onGenerateClick" styleClass="generate-button" text="Generate Sentence" />
+            <Button fx:id="generateButton" onAction="#onGenerateClick" styleClass="generate-button" style="-fx-font-size: 24px;" text="Generate Sentence" />
          </children>
       </HBox>
    </children>

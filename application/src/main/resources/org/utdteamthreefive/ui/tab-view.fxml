@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Author: Rommel Isaac Baldivas, Justin Yao, Aiden Martinez -->
+<!-- Combine the views from the different fxml files to create a tabbed interface and prevent scene switching -->
 
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
@@ -10,9 +12,12 @@
     <children>
         <TabPane fx:id="tabPane" prefHeight="1024.0" prefWidth="1440.0"
             tabClosingPolicy="UNAVAILABLE">
+            <!-- Sentence Builder Tab -->
             <Tab closable="false" styleClass="tab" text="Sentence Builder">
                 <fx:include source="text-bar.fxml" />
             </Tab>
+
+            <!-- Upload Files Tab -->
             <Tab closable="false" styleClass="tab" text="Upload Files">
                 <content>
                     <VBox fx:id="uploadContainer" alignment="TOP_CENTER" styleClass="upload-vbox">
@@ -49,6 +54,8 @@
                     </VBox>
                 </content>
             </Tab>
+
+            <!-- Words Tab -->
             <Tab closable="false" styleClass="tab" text="Words">
                 <content>
                     <VBox alignment="CENTER" styleClass="table-vbox">
